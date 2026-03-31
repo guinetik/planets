@@ -73,7 +73,7 @@ watch(sceneObjects, (objs) => {
 
   onFrame((time, delta) => {
     controls.update()
-    tickPlanets(planetEntries.value, time)
+    tickPlanets(planetEntries.value, time, delta)
     if (view.value === 'overview') {
       tickOverviewOrbits(planetEntries.value, delta)
     }

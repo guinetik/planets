@@ -16,7 +16,7 @@ export const TEXT_FADE_DELAY_S = 0.5
 
 // ── Planet rendering ─────────────────────────────────────────────
 export const PLANET_SPHERE_SEGMENTS = 64
-export const PLANET_ROTATION_SPEED = 0.05          // rad/s
+export const PLANET_ROTATION_SPEED = 0.05          // rad/s — mirrored as ROTATION_SPEED in planet.frag.glsl
 export const PLANET_MERIDIAN_COUNT = 5
 export const PLANET_LINE_WIDTH_UV = 0.008          // UV-space line thickness
 export const PLANET_MERIDIAN_OPACITY = 0.35
@@ -41,7 +41,9 @@ export const RING_OPACITY = 0.4
 export const SUN_RADIUS = 0.6
 export const SUN_COLOR = 0xfff8e0
 export const SUN_LIGHT_INTENSITY = 0.4
-export const ORBIT_LINE_OPACITY = 0.06
+export const SUN_SPHERE_SEGMENTS = 32
+export const SUN_MESH_OPACITY = 0.9
+export const SUN_LIGHT_RANGE = 100
 export const OVERVIEW_CAMERA_FOV = 60
 export const OVERVIEW_CAMERA_Z = 22
 export const OVERVIEW_CAMERA_NEAR = 0.1
@@ -50,7 +52,6 @@ export const OVERVIEW_CAMERA_FAR = 1000
 // ── Detail scene ─────────────────────────────────────────────────
 export const DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 0.85   // planet fills 85% of viewport height
 export const DETAIL_PLANET_X_RATIO = 0.28               // planet center at 28% from right edge
-export const DETAIL_CAMERA_Z = 5
 
 // ── Raycasting ───────────────────────────────────────────────────
 export const RAYCAST_HOVER_SCALE = 1.08

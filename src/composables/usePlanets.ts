@@ -78,7 +78,7 @@ export function buildPlanetEntries(scene: THREE.Scene): PlanetEntry[] {
   return entries
 }
 
-export function tickPlanets(entries: PlanetEntry[], time: number): void {
+export function tickPlanets(entries: PlanetEntry[], time: number, delta: number): void {
   for (const entry of entries) {
     entry.planetMeshRef.uniforms.uTime.value = time
     for (const moon of entry.moonEntries) {
@@ -86,7 +86,7 @@ export function tickPlanets(entries: PlanetEntry[], time: number): void {
       const pos = orbitPosition(moon.orbitRadius, angle, moon.orbitTilt)
       moon.meshRef.mesh.position.set(pos.x, pos.y, pos.z)
       moon.meshRef.uniforms.uTime.value = time
-      moon.meshRef.mesh.rotation.y += MOON_ROTATION_SPEED * 0.016
+      moon.meshRef.mesh.rotation.y += MOON_ROTATION_SPEED * delta
     }
   }
 }

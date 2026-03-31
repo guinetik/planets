@@ -30,7 +30,7 @@ export function useSceneState(
     const overviewRadius = OVERVIEW_SIZES[id]
     const detailRadius = DETAIL_SIZES[id]
     const targetScale = detailRadius / overviewRadius
-    const targetX = window.innerWidth * (1 - DETAIL_PLANET_X_RATIO) / 100
+    const targetX = window.innerWidth * (1 - DETAIL_PLANET_X_RATIO)
 
     transitionToDetail(entry, planetEntries.value, objs.camera, targetX, targetScale)
   }
