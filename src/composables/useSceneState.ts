@@ -1,46 +1,42 @@
 // src/composables/useSceneState.ts
-import { ref, type Ref } from 'vue'
+import * as THREE from 'three'
+import { ref, type Ref, type ShallowRef } from 'vue'
+import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { transitionToDetail, transitionToOverview } from '@/three/transitions'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
-import {
-  OVERVIEW_SIZES,
-  DETAIL_SIZES,
-  DETAIL_PLANET_X_RATIO,
-} from '@/lib/constants'
 
 export type ViewState = 'overview' | 'detail'
 
 export function useSceneState(
   sceneObjects: Ref<SceneObjects | null>,
   planetEntries: Ref<PlanetEntry[]>,
+  controlsRef: ShallowRef<OrbitControls | null>,
+  sunMeshRef: ShallowRef<THREE.Mesh | null>,
 ) {
   const view = ref<ViewState>('overview')
   const activePlanetId = ref<string | null>(null)
 
   function selectPlanet(id: string): void {
     const objs = sceneObjects.value
-    if (!objs) return
+    const controls = controlsRef.value
+    if (!objs || !controls) return
     const entry = planetEntries.value.find(e => e.id === id)
     if (!entry) return
 
     view.value = 'detail'
     activePlanetId.value = id
 
-    const overviewRadius = OVERVIEW_SIZES[id]
-    const detailRadius = DETAIL_SIZES[id]
-    const targetScale = detailRadius / overviewRadius
-    const targetX = window.innerWidth * (1 - DETAIL_PLANET_X_RATIO)
-
-    transitionToDetail(entry, planetEntries.value, objs.camera, targetX, targetScale)
+    transitionToDetail(entry, planetEntries.value, objs.camera, controls, sunMeshRef.value)
   }
 
   function returnToOverview(): void {
     const objs = sceneObjects.value
-    if (!objs) return
+    const controls = controlsRef.value
+    if (!objs || !controls) return
     view.value = 'overview'
     activePlanetId.value = null
-    transitionToOverview(planetEntries.value, objs.camera)
+    transitionToOverview(planetEntries.value, objs.camera, controls, sunMeshRef.value)
   }
 
   return { view, activePlanetId, selectPlanet, returnToOverview }
