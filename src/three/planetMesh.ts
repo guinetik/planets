@@ -10,7 +10,7 @@ import {
   PLANET_EQUATOR_OPACITY,
 } from '@/lib/constants'
 
-export interface PlanetMeshUniforms {
+export interface PlanetMeshUniforms extends Record<string, THREE.IUniform<any>> {
   uTime: THREE.IUniform<number>
   uAccentColor: THREE.IUniform<THREE.Color>
   uMeridianCount: THREE.IUniform<number>
