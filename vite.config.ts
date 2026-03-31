@@ -7,6 +7,11 @@ export default defineConfig({
   resolve: {
     alias: { '@': resolve(__dirname, 'src') }
   },
+  build: {
+    target: 'es2020',
+    sourcemap: false,
+    chunkSizeWarningLimit: 900,
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.ts'],

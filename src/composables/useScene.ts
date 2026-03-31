@@ -1,11 +1,11 @@
 // src/composables/useScene.ts
-import { ref, onMounted, onUnmounted, type Ref } from 'vue'
+import { shallowRef, onMounted, onUnmounted, type Ref } from 'vue'
 import { createScene, handleResize, type SceneObjects } from '@/three/scene'
 
 type FrameCallback = (time: number, delta: number) => void
 
 export function useScene(canvasRef: Ref<HTMLCanvasElement | null>) {
-  const sceneObjects = ref<SceneObjects | null>(null)
+  const sceneObjects = shallowRef<SceneObjects | null>(null)
   const frameCallbacks = new Set<FrameCallback>()
   let animationId = 0
   let lastTime = 0
