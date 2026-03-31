@@ -1,101 +1,152 @@
 // src/composables/usePlanets.ts
 import * as THREE from 'three'
-import type { SceneObjects } from '@/three/scene'
 import { createPlanetMesh, type PlanetMesh } from '@/three/planetMesh'
 import { createMoonMesh, type MoonMesh } from '@/three/moonMesh'
-import { createSunMesh } from '@/three/sunMesh'
+import { createSunMesh, type SunObjects } from '@/three/sunMesh'
 import { createRingMesh } from '@/three/ringMesh'
-import { orbitPosition, moonOrbitAngle } from '@/lib/orbit'
-import { PLANETS } from '@/lib/planets'
+import { createStarfield } from '@/three/starfield'
+import { orbitalPosition3D, orbitPathPoints, type OrbitalElements } from '@/lib/kepler'
+import { PLANETS, SUN } from '@/lib/planets'
 import {
-  OVERVIEW_ORBITS,
-  OVERVIEW_SIZES,
-  MOON_ROTATION_SPEED,
-  OVERVIEW_ORBIT_SPEED,
+  ORBIT_SCALE,
+  ORBIT_PATH_SEGMENTS,
+  ORBIT_PATH_COLOR,
+  ORBIT_PATH_OPACITY,
+  MOON_ORBIT_PATH_OPACITY,
 } from '@/lib/constants'
 
 export interface MoonEntry {
   name: string
   meshRef: MoonMesh
-  orbitSpeed: number
-  orbitRadius: number
-  orbitTilt: number
-  orbitOffset: number
+  orbit: OrbitalElements  // scaled orbit (semiMajorAxis * ORBIT_SCALE)
+  epoch: number
 }
 
 export interface PlanetEntry {
   id: string
+  name: string
   planetGroup: THREE.Group
   planetMeshRef: PlanetMesh
   moonEntries: MoonEntry[]
   ringMesh: THREE.Mesh | null
-  orbitAngle: number
+  orbit: OrbitalElements  // scaled orbit
+  epoch: number
+  orbitLine: THREE.LineLoop
 }
 
-export function buildPlanetEntries(scene: THREE.Scene): PlanetEntry[] {
+export interface SolarSystemObjects {
+  entries: PlanetEntry[]
+  sunObjects: SunObjects
+}
+
+function keplerToWorld(pos: { x: number; y: number; z: number }): THREE.Vector3 {
+  return new THREE.Vector3(pos.x, pos.z, pos.y)
+}
+
+function createOrbitLine(elements: OrbitalElements, isMoon: boolean): THREE.LineLoop {
+  const rawPoints = orbitPathPoints(elements, ORBIT_PATH_SEGMENTS)
+  const threePoints = rawPoints.map(p =>
+    new THREE.Vector3(p.x, p.z, p.y)
+  )
+  const geometry = new THREE.BufferGeometry().setFromPoints(threePoints)
+  const material = new THREE.LineBasicMaterial({
+    color: ORBIT_PATH_COLOR,
+    transparent: true,
+    opacity: isMoon ? MOON_ORBIT_PATH_OPACITY : ORBIT_PATH_OPACITY,
+  })
+  return new THREE.LineLoop(geometry, material)
+}
+
+export function buildPlanetEntries(scene: THREE.Scene): SolarSystemObjects {
   const entries: PlanetEntry[] = []
 
-  const { mesh: sunMesh } = createSunMesh()
-  scene.add(sunMesh)
+  scene.add(createStarfield())
+
+  const sunObjects = createSunMesh(SUN)
+  scene.add(sunObjects.mesh)
 
   for (const planet of PLANETS) {
-    const radius = OVERVIEW_SIZES[planet.id]
-    const planetMeshRef = createPlanetMesh(planet.accentColor, radius)
+    const planetMeshRef = createPlanetMesh(planet.shader, planet.displayRadius)
     const planetGroup = new THREE.Group()
     planetGroup.add(planetMeshRef.mesh)
 
+    const epoch = -Math.random() * planet.orbit.period
+    const scaledOrbit: OrbitalElements = {
+      ...planet.orbit,
+      semiMajorAxis: planet.orbit.semiMajorAxis * ORBIT_SCALE,
+      epoch,
+    }
+
     const moonEntries: MoonEntry[] = []
     for (const moon of planet.moons) {
-      const moonRadius = moon.size
-      const moonMeshRef = createMoonMesh(planet.accentColor, moonRadius)
+      const moonMeshRef = createMoonMesh(moon.shader, moon.displayRadius)
       planetGroup.add(moonMeshRef.mesh)
+
+      const moonEpoch = -Math.random() * moon.orbit.period
+      const scaledMoonOrbit: OrbitalElements = {
+        ...moon.orbit,
+        semiMajorAxis: moon.orbit.semiMajorAxis * ORBIT_SCALE,
+        epoch: moonEpoch,
+      }
+
+      const moonOrbitLine = createOrbitLine(scaledMoonOrbit, true)
+      planetGroup.add(moonOrbitLine)
+
       moonEntries.push({
         name: moon.name,
         meshRef: moonMeshRef,
-        orbitSpeed: moon.orbitSpeed,
-        orbitRadius: moon.orbitRadius * radius,
-        orbitTilt: moon.orbitTilt,
-        orbitOffset: moon.orbitOffset,
+        orbit: scaledMoonOrbit,
+        epoch: moonEpoch,
       })
     }
 
     let ringMesh: THREE.Mesh | null = null
-    if (planet.id === 'saturn') {
-      ringMesh = createRingMesh(planet.accentColor, radius)
+    if (planet.ring) {
+      ringMesh = createRingMesh(planet.ring, planet.displayRadius)
       planetGroup.add(ringMesh)
     }
 
-    const orbitRadius = OVERVIEW_ORBITS[planet.id]
-    const orbitAngle = Math.random() * Math.PI * 2
-    const startPos = orbitPosition(orbitRadius, orbitAngle, 0)
-    planetGroup.position.set(startPos.x, startPos.y, startPos.z)
+    const orbitLine = createOrbitLine(scaledOrbit, false)
+    scene.add(orbitLine)
+
+    const initialPos = orbitalPosition3D(scaledOrbit, 0)
+    planetGroup.position.copy(keplerToWorld(initialPos))
 
     scene.add(planetGroup)
 
-    entries.push({ id: planet.id, planetGroup, planetMeshRef, moonEntries, ringMesh, orbitAngle })
+    entries.push({
+      id: planet.id,
+      name: planet.name,
+      planetGroup,
+      planetMeshRef,
+      moonEntries,
+      ringMesh,
+      orbit: scaledOrbit,
+      epoch,
+      orbitLine,
+    })
   }
 
-  return entries
+  return { entries, sunObjects }
 }
 
-export function tickPlanets(entries: PlanetEntry[], time: number, delta: number): void {
+export function tickPlanets(
+  entries: PlanetEntry[],
+  simTime: number,
+  sunUniforms: Record<string, THREE.IUniform>,
+): void {
+  sunUniforms.uTime.value = simTime / 365.25
+
   for (const entry of entries) {
-    entry.planetMeshRef.uniforms.uTime.value = time
+    const planetPos = orbitalPosition3D(entry.orbit, simTime)
+    entry.planetGroup.position.copy(keplerToWorld(planetPos))
+
+    entry.planetMeshRef.uniforms.uTime.value = simTime / 365.25
+
     for (const moon of entry.moonEntries) {
-      const angle = moonOrbitAngle(moon.orbitSpeed, time, moon.orbitOffset)
-      const pos = orbitPosition(moon.orbitRadius, angle, moon.orbitTilt)
-      moon.meshRef.mesh.position.set(pos.x, pos.y, pos.z)
-      moon.meshRef.uniforms.uTime.value = time
-      moon.meshRef.mesh.rotation.y += MOON_ROTATION_SPEED * delta
+      const moonPos = orbitalPosition3D(moon.orbit, simTime)
+      moon.meshRef.mesh.position.copy(keplerToWorld(moonPos))
+      moon.meshRef.uniforms.uTime.value = simTime / 365.25
     }
-  }
-}
-
-export function tickOverviewOrbits(entries: PlanetEntry[], delta: number): void {
-  for (const entry of entries) {
-    entry.orbitAngle += OVERVIEW_ORBIT_SPEED * delta
-    const orbitRadius = OVERVIEW_ORBITS[entry.id]
-    const pos = orbitPosition(orbitRadius, entry.orbitAngle, 0)
-    entry.planetGroup.position.set(pos.x, pos.y, pos.z)
   }
 }
