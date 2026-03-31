@@ -1,28 +1,21 @@
-// src/three/ringMesh.ts
 import * as THREE from 'three'
-import {
-  RING_TUBE_SEGMENTS,
-  RING_RADIAL_SEGMENTS,
-  RING_TILT_RADIANS,
-  RING_INNER_RATIO,
-  RING_OUTER_RATIO,
-  RING_TUBE_RATIO,
-  RING_OPACITY,
-} from '@/lib/constants'
+import type { RingConfig } from '@/lib/planets'
+import { SIZE_SCALE, RING_SEGMENTS } from '@/lib/constants'
 
-export function createRingMesh(accentHex: string, planetRadius: number): THREE.Mesh {
-  const avgRadius = ((RING_INNER_RATIO + RING_OUTER_RATIO) / 2) * planetRadius
-  const tubeRadius = RING_TUBE_RATIO * planetRadius
+export function createRingMesh(ringConfig: RingConfig, planetDisplayRadius: number): THREE.Mesh {
+  const planetRadius = planetDisplayRadius * SIZE_SCALE
+  const innerR = ringConfig.innerRadius * planetRadius
+  const outerR = ringConfig.outerRadius * planetRadius
 
-  const geometry = new THREE.TorusGeometry(avgRadius, tubeRadius, RING_RADIAL_SEGMENTS, RING_TUBE_SEGMENTS)
+  const geometry = new THREE.RingGeometry(innerR, outerR, RING_SEGMENTS)
   const material = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(accentHex),
+    color: new THREE.Color(0xdcc38c),
     transparent: true,
-    opacity: RING_OPACITY,
+    opacity: 0.5,
     side: THREE.DoubleSide,
   })
 
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.rotation.x = RING_TILT_RADIANS
+  mesh.rotation.x = -Math.PI / 2 + ringConfig.tilt
   return mesh
 }

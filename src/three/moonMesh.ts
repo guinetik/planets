@@ -1,38 +1,32 @@
-// src/three/moonMesh.ts
 import * as THREE from 'three'
-import vertSrc from './shaders/planet.vert.glsl?raw'
-import fragSrc from './shaders/planet.frag.glsl?raw'
-import {
-  MOON_SPHERE_SEGMENTS,
-  MOON_OPACITY,
-  PLANET_MERIDIAN_COUNT,
-  PLANET_LINE_WIDTH_UV,
-  PLANET_MERIDIAN_OPACITY,
-  PLANET_EQUATOR_OPACITY,
-} from '@/lib/constants'
-import type { PlanetMeshUniforms } from './planetMesh'
+import vertSrc from './shaders/sphere.vert.glsl?raw'
+import commonSrc from './shaders/common.glsl?raw'
+import rockyFragSrc from './shaders/rockyPlanet.frag.glsl?raw'
+import type { ShaderConfig } from '@/lib/planets'
+import { MOON_SPHERE_SEGMENTS, SIZE_SCALE } from '@/lib/constants'
 
 export interface MoonMesh {
   mesh: THREE.Mesh
-  uniforms: PlanetMeshUniforms
+  uniforms: Record<string, THREE.IUniform>
 }
 
-export function createMoonMesh(accentHex: string, radius: number): MoonMesh {
-  const uniforms: PlanetMeshUniforms = {
-    uTime:            { value: 0 },
-    uAccentColor:     { value: new THREE.Color(accentHex) },
-    uMeridianCount:   { value: PLANET_MERIDIAN_COUNT },
-    uLineWidthUV:     { value: PLANET_LINE_WIDTH_UV },
-    uMeridianOpacity: { value: PLANET_MERIDIAN_OPACITY * MOON_OPACITY },
-    uEquatorOpacity:  { value: PLANET_EQUATOR_OPACITY * MOON_OPACITY },
+export function createMoonMesh(shader: ShaderConfig, displayRadius: number): MoonMesh {
+  const radius = displayRadius * SIZE_SCALE
+
+  const uniforms: Record<string, THREE.IUniform> = { uTime: { value: 0 } }
+  for (const [key, val] of Object.entries(shader.uniforms)) {
+    if (Array.isArray(val)) {
+      uniforms[key] = { value: new THREE.Vector3(...val) }
+    } else {
+      uniforms[key] = { value: val }
+    }
   }
 
   const material = new THREE.ShaderMaterial({
-    vertexShader:   vertSrc,
-    fragmentShader: fragSrc,
+    vertexShader: vertSrc,
+    fragmentShader: commonSrc + '\n' + rockyFragSrc,
     uniforms,
     transparent: true,
-    opacity: MOON_OPACITY,
   })
 
   const geometry = new THREE.SphereGeometry(radius, MOON_SPHERE_SEGMENTS, MOON_SPHERE_SEGMENTS)
