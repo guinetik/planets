@@ -1,14 +1,18 @@
 // src/composables/useScene.ts
-import { shallowRef, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, type Ref } from 'vue'
 import { createScene, handleResize, type SceneObjects } from '@/three/scene'
+import { DEFAULT_TIME_SCALE } from '@/lib/constants'
 
-type FrameCallback = (time: number, delta: number) => void
+type FrameCallback = (simTime: number, delta: number) => void
 
 export function useScene(canvasRef: Ref<HTMLCanvasElement | null>) {
   const sceneObjects = shallowRef<SceneObjects | null>(null)
   const frameCallbacks = new Set<FrameCallback>()
   let animationId = 0
   let lastTime = 0
+  let simTime = 0
+  const timeScale = ref(DEFAULT_TIME_SCALE)
+  const paused = ref(false)
 
   function onFrame(callback: FrameCallback): void {
     frameCallbacks.add(callback)
@@ -16,18 +20,23 @@ export function useScene(canvasRef: Ref<HTMLCanvasElement | null>) {
 
   function tick(timeMs: number): void {
     const time = timeMs / 1000
-    const delta = time - lastTime
+    const delta = Math.min(time - lastTime, 0.1)
     lastTime = time
-    for (const cb of frameCallbacks) cb(time, delta)
+
+    if (!paused.value) {
+      simTime += delta * timeScale.value
+    }
+
+    for (const cb of frameCallbacks) cb(simTime, delta)
     const objs = sceneObjects.value
-    if (objs) objs.renderer.render(objs.scene, objs.camera)
+    if (objs) objs.composer.render()
     animationId = requestAnimationFrame(tick)
   }
 
   function onResize(): void {
     const objs = sceneObjects.value
     if (!objs) return
-    handleResize(objs.camera, objs.renderer)
+    handleResize(objs.camera, objs.renderer, objs.composer)
   }
 
   onMounted(() => {
@@ -43,5 +52,5 @@ export function useScene(canvasRef: Ref<HTMLCanvasElement | null>) {
     sceneObjects.value?.renderer.dispose()
   })
 
-  return { sceneObjects, onFrame }
+  return { sceneObjects, onFrame, timeScale, paused }
 }
