@@ -4,7 +4,7 @@ import {
   ellipseIntrusionAtY,
   maxIntrusionAtY,
   type ScreenCircle,
-  type ScreenEllipse,
+  type ScreenEllipseObstacle,
   type Obstacle,
 } from './obstacles'
 
@@ -30,7 +30,7 @@ describe('circleIntrusionAtY', () => {
 })
 
 describe('ellipseIntrusionAtY', () => {
-  const ellipse: ScreenEllipse = { kind: 'ellipse', cx: 800, cy: 300, rx: 150, ry: 80 }
+  const ellipse: ScreenEllipseObstacle = { kind: 'ellipse', cx: 800, cy: 300, rx: 150, ry: 80 }
 
   it('returns 0 when y is outside the ellipse vertically', () => {
     expect(ellipseIntrusionAtY(ellipse, 100)).toBe(0)
