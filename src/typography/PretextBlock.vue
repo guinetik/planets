@@ -8,6 +8,7 @@
       v-for="(line, i) in lines"
       :key="i"
       class="pretext-line"
+      :style="{ width: `${line.availableWidth}px` }"
     >{{ line.text }}</span>
   </div>
 </template>
@@ -26,10 +27,11 @@ defineProps<{
 .pretext-line {
   display: block;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 14px;
-  line-height: 28px;
+  font-size: 26px;
+  line-height: 46px;
   color: rgba(200, 192, 180, 0.75);
   white-space: nowrap;
   overflow: hidden;
+  text-align: right;
 }
 </style>

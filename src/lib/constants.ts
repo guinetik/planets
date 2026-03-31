@@ -69,3 +69,10 @@ export const LABEL_OFFSET_Y = 18
 // Detail view
 export const DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 2.0
 export const DETAIL_PLANET_X_RATIO = 0.15
+
+// Obstacle projection
+export const RING_PROJECTION_SAMPLES = 64
+export const RING_TILT_RADIANS = 26.73 * (Math.PI / 180)
+export const RING_INNER_RATIO = 1.15
+export const RING_OUTER_RATIO = 1.6
+export const SUN_RADIUS = 0.0275 * 26.0  // SUN.displayRadius * SIZE_SCALE

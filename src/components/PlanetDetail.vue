@@ -8,7 +8,6 @@
       <h1 class="planet-name" :style="{ color: planet.accentColor }">
         {{ planet.name }}
       </h1>
-      <PretextBlock :lines="lines" :top-y="topY" :left-x="leftX" />
     </div>
   </Transition>
 </template>
@@ -16,14 +15,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getPlanet } from '@/lib/planets'
-import PretextBlock from '@/typography/PretextBlock.vue'
-import type { LayoutLine } from '@/typography/layout'
 
 const props = defineProps<{
   planetId: string | null
-  lines: LayoutLine[]
-  topY: number
-  leftX: number
 }>()
 
 const planet = computed(() => props.planetId ? getPlanet(props.planetId) : null)

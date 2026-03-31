@@ -7,6 +7,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': resolve(__dirname, 'src') }
   },
+  server: {
+    port: 9955,
+  },
   build: {
     target: 'es2020',
     sourcemap: false,
