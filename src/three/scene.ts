@@ -1,40 +1,68 @@
 // src/three/scene.ts
 import * as THREE from 'three'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import {
   BACKGROUND_COLOR,
-  OVERVIEW_CAMERA_FOV,
-  OVERVIEW_CAMERA_Z,
-  OVERVIEW_CAMERA_NEAR,
-  OVERVIEW_CAMERA_FAR,
+  CAMERA_FOV,
+  CAMERA_POSITION_Y,
+  CAMERA_POSITION_Z,
+  CAMERA_NEAR,
+  CAMERA_FAR,
+  BLOOM_STRENGTH,
+  BLOOM_RADIUS,
+  BLOOM_THRESHOLD,
 } from '@/lib/constants'
 
 export interface SceneObjects {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
+  composer: EffectComposer
 }
 
 export function createScene(canvas: HTMLCanvasElement): SceneObjects {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  renderer.toneMappingExposure = 1.0
 
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(BACKGROUND_COLOR)
 
   const camera = new THREE.PerspectiveCamera(
-    OVERVIEW_CAMERA_FOV,
+    CAMERA_FOV,
     window.innerWidth / window.innerHeight,
-    OVERVIEW_CAMERA_NEAR,
-    OVERVIEW_CAMERA_FAR,
+    CAMERA_NEAR,
+    CAMERA_FAR,
   )
-  camera.position.z = OVERVIEW_CAMERA_Z
+  camera.position.set(0, CAMERA_POSITION_Y, CAMERA_POSITION_Z)
+  camera.lookAt(0, 0, 0)
 
-  return { scene, camera, renderer }
+  // Post-processing
+  const composer = new EffectComposer(renderer)
+  composer.addPass(new RenderPass(scene, camera))
+
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    BLOOM_STRENGTH,
+    BLOOM_RADIUS,
+    BLOOM_THRESHOLD,
+  )
+  composer.addPass(bloomPass)
+
+  return { scene, camera, renderer, composer }
 }
 
-export function handleResize(camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer): void {
+export function handleResize(
+  camera: THREE.PerspectiveCamera,
+  renderer: THREE.WebGLRenderer,
+  composer: EffectComposer,
+): void {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
+  composer.setSize(window.innerWidth, window.innerHeight)
 }
