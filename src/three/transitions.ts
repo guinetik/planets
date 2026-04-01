@@ -19,9 +19,7 @@ import {
 const DETAIL_PLANET_POS = new THREE.Vector3(0, 0, 0)
 
 /** Per-planet scale overrides for the detail view (1.0 = default). */
-const DETAIL_SCALE: Record<string, number> = {
-  earth: 1.2,
-}
+const DETAIL_SCALE: Record<string, number> = {}
 
 /** How far the camera pulls back during planet-to-planet switch. */
 const PULLBACK_DISTANCE = 5

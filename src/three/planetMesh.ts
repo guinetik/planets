@@ -6,7 +6,8 @@ import rockyFragSrc from "./shaders/rockyPlanet.frag.glsl?raw";
 import gasFragSrc from "./shaders/gasGiant.frag.glsl?raw";
 import type { ShaderConfig } from "@/lib/planets";
 import type { LoadedModel } from "./modelLoader";
-import { SPHERE_SEGMENTS, SIZE_SCALE } from "@/lib/constants";
+import { SPHERE_SEGMENTS, SIZE_SCALE, ENABLE_GLB_PLANETS } from "@/lib/constants";
+import { createSimplePlanetMesh } from "./simplePlanetMesh";
 
 export interface PlanetMesh {
   mesh: THREE.Mesh;
@@ -15,10 +16,19 @@ export interface PlanetMesh {
 }
 
 export function createPlanetMesh(
+  planetId: string,
   shader: ShaderConfig,
   displayRadius: number,
   model?: LoadedModel,
 ): PlanetMesh {
+  // --- New default: textured sphere ---
+  if (!ENABLE_GLB_PLANETS) {
+    const baseColor = shader.uniforms.uBaseColor as number[];
+    const simple = createSimplePlanetMesh(planetId, baseColor, displayRadius);
+    return { mesh: simple.mesh, uniforms: simple.uniforms, isModel: false };
+  }
+
+  // --- Legacy: GLB model + procedural shader fallback (behind ENABLE_GLB_PLANETS) ---
   const radius = displayRadius * SIZE_SCALE;
   const geometry = new THREE.SphereGeometry(
     radius,

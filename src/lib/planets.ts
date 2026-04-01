@@ -19,6 +19,13 @@ export interface Moon {
   readonly rotationSpeed: number; // rad/day (simTime units). 0 = tidally locked (no self-spin)
 }
 
+export interface RingConfig {
+  readonly innerRadius: number; // multiplier of planet displayRadius
+  readonly outerRadius: number; // multiplier of planet displayRadius
+  readonly opacity: number;
+  readonly color: number[]; // [r, g, b] tint
+}
+
 export interface Planet {
   readonly id: string;
   readonly name: string;
@@ -27,6 +34,7 @@ export interface Planet {
   readonly orbit: OrbitalElements;
   readonly displayRadius: number;
   readonly shader: ShaderConfig;
+  readonly ring?: RingConfig;
   readonly moons: readonly Moon[];
   readonly prose: readonly string[];
   readonly rotationSpeed: number; // rad/day. Negative = retrograde (Venus, Uranus)
@@ -354,9 +362,15 @@ export const PLANETS: readonly Planet[] = [
       argumentOfPeriapsis: 339.392 * DEG,
       period: 10759.22,
     },
-    displayRadius: 0.025,
+    displayRadius: 0.014,
     axialTilt: 26.73 * DEG, // ~27°
     rotationSpeed: 14.1513, // 0.44 day period — fast spinner
+    ring: {
+      innerRadius: 1.2,
+      outerRadius: 2.3,
+      opacity: 0.7,
+      color: [0.85, 0.75, 0.55],
+    },
     shader: {
       type: "gasGiant",
       uniforms: {
@@ -432,6 +446,12 @@ export const PLANETS: readonly Planet[] = [
     displayRadius: 0.011,
     axialTilt: 97.77 * DEG, // ~98° — rotates on its side
     rotationSpeed: -8.7965, // 0.72 day period, RETROGRADE
+    ring: {
+      innerRadius: 1.4,
+      outerRadius: 2.0,
+      opacity: 0.3,
+      color: [0.55, 0.7, 0.8],
+    },
     shader: {
       type: "gasGiant",
       uniforms: {

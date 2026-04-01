@@ -1,5 +1,8 @@
 // src/lib/constants.ts
 
+// Feature toggles
+export const ENABLE_GLB_PLANETS = false; // when false, planets render as procedural colored spheres
+
 // Scene
 export const BACKGROUND_COLOR = 0x000000;
 
@@ -95,7 +98,7 @@ export const LABEL_COLOR = "#999999";
 export const LABEL_OFFSET_Y = 18;
 
 // Detail view
-export const DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 1.5;
+export const DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 0.8;
 export const DETAIL_PLANET_X_RATIO = 0.285;
 
 // Obstacle projection

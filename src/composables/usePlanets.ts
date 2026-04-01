@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { createPlanetMesh, type PlanetMesh } from "@/three/planetMesh";
 import { createMoonMesh, type MoonMesh } from "@/three/moonMesh";
 import { createSunMesh, type SunObjects } from "@/three/sunMesh";
+import { createRingMesh } from "@/three/ringMesh";
 import { createStarfield } from "@/three/starfield";
 import { loadAllModels, type ModelCache } from "@/three/modelLoader";
 import {
@@ -34,6 +35,7 @@ export interface PlanetEntry {
   name: string;
   planetGroup: THREE.Group;
   planetMeshRef: PlanetMesh;
+  ringUniforms: Record<string, THREE.IUniform> | null;
   moonEntries: MoonEntry[];
   orbit: OrbitalElements;
   epoch: number;
@@ -205,12 +207,22 @@ export async function buildPlanetEntries(
   for (const planet of PLANETS) {
     const planetModel = models.get(planet.id);
     const planetMeshRef = createPlanetMesh(
+      planet.id,
       planet.shader,
       planet.displayRadius,
       planetModel,
     );
     const planetGroup = new THREE.Group();
     planetGroup.add(planetMeshRef.mesh);
+
+    // Shader-based ring (added to the planet mesh so it tilts with axial tilt)
+    let ringUniforms: Record<string, THREE.IUniform> | null = null;
+    if (planet.ring) {
+      const ringMesh = createRingMesh(planet.ring, planet.displayRadius);
+      planetMeshRef.mesh.add(ringMesh);
+      ringUniforms = (ringMesh.material as THREE.ShaderMaterial).uniforms;
+    }
+
     enableDynamicSunLighting(
       planetMeshRef.mesh,
       planetMeshRef.uniforms,
@@ -283,6 +295,7 @@ export async function buildPlanetEntries(
       name: planet.name,
       planetGroup,
       planetMeshRef,
+      ringUniforms,
       moonEntries,
       orbit: scaledOrbit,
       epoch,
@@ -331,6 +344,10 @@ export function tickPlanets(
     // Update planet shader time (if procedural)
     if (entry.planetMeshRef.uniforms.uTime) {
       entry.planetMeshRef.uniforms.uTime.value = shaderTime;
+    }
+    // Update ring shader time
+    if (entry.ringUniforms?.uTime) {
+      entry.ringUniforms.uTime.value = shaderTime;
     }
     updateDynamicSunLighting(
       entry.planetMeshRef.mesh,
