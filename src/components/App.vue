@@ -12,6 +12,11 @@
       :camera="activeCamera"
     />
     <router-view />
+    <PretextBlock
+      :lines="proseLines"
+      :top-y="proseStartY"
+      :left-x="proseLeftX"
+    />
   </div>
 </template>
 
@@ -27,8 +32,10 @@ import { useScene } from '@/composables/useScene'
 import { buildPlanetEntries, tickPlanets, type PlanetEntry } from '@/composables/usePlanets'
 import { useSceneState } from '@/composables/useSceneState'
 import { createOrbitControls } from '@/three/controls'
-import { PLANET_IDS, PLANETS, SUN } from '@/lib/planets'
+import { PLANET_IDS, PLANETS, SUN, getPlanet } from '@/lib/planets'
 import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
+import PretextBlock from '@/typography/PretextBlock.vue'
+import { usePretextLayout } from '@/composables/usePretextLayout'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,6 +50,7 @@ const sunMeshRef = shallowRef<THREE.Mesh | null>(null)
 const sunUniformsRef = shallowRef<Record<string, THREE.IUniform>>({})
 const sceneReady = ref(false)
 const { view, activePlanetId, selectPlanet, returnToOverview } = useSceneState(sceneObjects, planetEntries, controlsRef, sunMeshRef)
+const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, updateCurveLayout, clearLayout } = usePretextLayout(sceneObjects)
 
 const activeCamera = computed(() => sceneObjects.value?.camera ?? null)
 
@@ -158,6 +166,16 @@ watch(sceneObjects, async (objs) => {
       controls.update()
     }
     tickPlanets(planetEntries.value, simTime, sunUniformsRef.value, sunMeshRef.value, activePlanetId.value)
+
+    if (view.value === 'detail' && activePlanetId.value) {
+      const entry = planetEntries.value.find(e => e.id === activePlanetId.value)
+      if (entry) {
+        const planet = getPlanet(entry.id)
+        updateCurveLayout(planet.prose.join('\n\n'), entry)
+      }
+    } else {
+      clearLayout()
+    }
   })
 })
 </script>
