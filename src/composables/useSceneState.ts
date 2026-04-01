@@ -24,10 +24,14 @@ export function useSceneState(
     const entry = planetEntries.value.find(e => e.id === id)
     if (!entry) return
 
+    const previousEntry = view.value === 'detail'
+      ? planetEntries.value.find(e => e.id === activePlanetId.value) ?? null
+      : null
+
     view.value = 'detail'
     activePlanetId.value = id
 
-    transitionToDetail(entry, planetEntries.value, objs.camera, controls, sunMeshRef.value)
+    transitionToDetail(entry, planetEntries.value, objs.camera, controls, sunMeshRef.value, previousEntry)
   }
 
   function returnToOverview(): void {
