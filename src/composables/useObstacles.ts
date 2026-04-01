@@ -14,7 +14,7 @@ import {
 const _vec = new THREE.Vector3()
 const _vecEdge = new THREE.Vector3()
 
-function projectSphere(
+export function projectSphere(
   worldPos: THREE.Vector3,
   worldRadius: number,
   camera: THREE.PerspectiveCamera,
