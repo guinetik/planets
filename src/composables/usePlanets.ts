@@ -367,11 +367,15 @@ export function tickPlanets(
     );
 
     // Moons: keep orbiting for active planet, pause for others in detail
+    // In detail view, slow moons further so they don't zip across the close-up frame
+    const moonSpeedDivisor = (inDetail && isActive)
+      ? MOON_ORBIT_SPEED_DIVISOR * 4
+      : MOON_ORBIT_SPEED_DIVISOR;
     for (const moon of entry.moonEntries) {
       if (!inDetail || isActive) {
         const moonPos = orbitalPosition3D(
           moon.orbit,
-          simTime / MOON_ORBIT_SPEED_DIVISOR,
+          simTime / moonSpeedDivisor,
         );
         moon.meshRef.mesh.position.copy(keplerToWorld(moonPos));
         moon.meshRef.mesh.rotation.y = (simTime * 0.15) / ROTATION_SPEED_DIVISOR;

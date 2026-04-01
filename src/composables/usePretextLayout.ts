@@ -5,6 +5,7 @@ import { layoutProseAlongCurve, type LayoutLine, type CurveLayoutConfig } from '
 import { projectSphere } from './useObstacles'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
+import type { ScreenCircle } from '@/lib/obstacles'
 
 export function usePretextLayout(
   sceneObjects: Ref<SceneObjects | null>,
@@ -56,10 +57,35 @@ export function usePretextLayout(
     // Padding scales with planet size — keeps text off the planet surface
     const padding = screenRadius * 0.32
 
+    // Project moons — include any that overlap the text column
+    const textRight = cx - screenRadius
+    const moonCircles: ScreenCircle[] = []
+    for (const moon of entry.moonEntries) {
+      const moonWorldPos = new THREE.Vector3()
+      moon.meshRef.mesh.getWorldPosition(moonWorldPos)
+      const moonGeomRadius = (moon.meshRef.mesh.geometry as THREE.SphereGeometry).parameters.radius
+      const moonWorldRadius = moonGeomRadius * entry.planetGroup.scale.x
+      const moonCircle = projectSphere(moonWorldPos, moonWorldRadius, objs.camera, viewport)
+
+      // Perspective silhouette correction for moon too
+      const moonDist = objs.camera.position.distanceTo(moonWorldPos)
+      const moonRatio = moonDist > moonWorldRadius
+        ? 1 / Math.sqrt(1 - (moonWorldRadius / moonDist) ** 2)
+        : 1
+      const correctedMoonR = moonCircle.r * moonRatio
+
+      // Include if any part of the moon is over the text area (left of the planet edge)
+      if (moonCircle.cx - correctedMoonR < textRight) {
+        moonCircles.push({ kind: 'circle', cx: moonCircle.cx, cy: moonCircle.cy, r: correctedMoonR })
+      }
+    }
+
     const config: CurveLayoutConfig = {
       planet,
       padding,
       leftX: layoutLeftX,
+      moons: moonCircles.length > 0 ? moonCircles : undefined,
+      moonPadding: padding * 0.85,
     }
 
     const result = layoutProseAlongCurve(prose, config)

@@ -102,6 +102,8 @@ export interface CurveLayoutConfig {
   planet: ScreenCircle
   padding: number
   leftX: number
+  moons?: ScreenCircle[]
+  moonPadding?: number
 }
 
 export interface CurveLayoutResult {
@@ -122,12 +124,27 @@ function curveWidthAtLine(
   planet: ScreenCircle,
   padding: number,
   leftX: number,
+  moons?: ScreenCircle[],
+  moonPadding?: number,
 ): number | null {
   const lineY = startY + lineIndex * lineH
   const dy = lineY - planet.cy
   if (Math.abs(dy) > planet.r) return null
   const planetLeftAtY = planet.cx - Math.sqrt(planet.r ** 2 - dy ** 2)
-  const maxWidth = planetLeftAtY - padding - leftX
+  let rightBound = planetLeftAtY - padding
+
+  // Check if any moon further narrows the line at this Y
+  if (moons) {
+    const mPad = moonPadding ?? padding * 0.5
+    for (const moon of moons) {
+      const mdy = lineY - moon.cy
+      if (Math.abs(mdy) > moon.r) continue
+      const moonLeftAtY = moon.cx - Math.sqrt(moon.r ** 2 - mdy ** 2)
+      rightBound = Math.min(rightBound, moonLeftAtY - mPad)
+    }
+  }
+
+  const maxWidth = rightBound - leftX
   return maxWidth >= MIN_LINE_WIDTH ? maxWidth : null
 }
 
@@ -143,12 +160,12 @@ export function layoutProseAlongCurve(
   prose: string,
   config: CurveLayoutConfig,
 ): CurveLayoutResult {
-  const { planet, padding, leftX } = config
+  const { planet, padding, leftX, moons, moonPadding } = config
   const prepared = getPrepared(prose)
   const lineH = proseLineHeight()
   const fontSize = parseFloat(proseFont())
 
-  // Pass 1: lay out from top of circle to count lines
+  // Pass 1: lay out from top of circle to count lines (ignoring moons — they're transient)
   const topStartY = planet.cy - planet.r
   let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
   let lineCount = 0
@@ -168,7 +185,7 @@ export function layoutProseAlongCurve(
     lineIndex++
   }
 
-  // Pass 2: lay out centered on the planet
+  // Pass 2: lay out centered on the planet, now accounting for moons
   const textHeight = lineCount * lineH
   const startY = planet.cy - textHeight / 2
 
@@ -177,7 +194,7 @@ export function layoutProseAlongCurve(
   lineIndex = 0
 
   while (true) {
-    const maxWidth = curveWidthAtLine(lineIndex, startY, lineH, planet, padding, leftX)
+    const maxWidth = curveWidthAtLine(lineIndex, startY, lineH, planet, padding, leftX, moons, moonPadding)
     if (maxWidth === null) {
       if (startY + lineIndex * lineH > planet.cy + planet.r) break
       lineIndex++
