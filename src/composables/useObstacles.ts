@@ -4,14 +4,10 @@ import { ref, type Ref } from 'vue'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
 import type { Obstacle } from '@/lib/obstacles'
-import { ndcToScreen, screenRadius, fitEllipseToNDCPoints } from '@/lib/projection'
+import { ndcToScreen, screenRadius } from '@/lib/projection'
 import type { ViewState } from './useSceneState'
 import {
   TEXT_COLUMN_LEFT_PX,
-  RING_PROJECTION_SAMPLES,
-  RING_TILT_RADIANS,
-  RING_INNER_RATIO,
-  RING_OUTER_RATIO,
   SUN_RADIUS,
 } from '@/lib/constants'
 
@@ -93,26 +89,6 @@ export function useObstacles(
           }
         }
 
-        // Ring obstacle (Saturn)
-        if (entry.ringMesh) {
-          const avgRadius = ((RING_INNER_RATIO + RING_OUTER_RATIO) / 2) * planetWorldRadius
-          const ndcPoints: { x: number; y: number }[] = []
-          for (let i = 0; i < RING_PROJECTION_SAMPLES; i++) {
-            const angle = (i / RING_PROJECTION_SAMPLES) * Math.PI * 2
-            const localX = avgRadius * Math.cos(angle)
-            const localZ = avgRadius * Math.sin(angle)
-            const ringWorldPos = new THREE.Vector3(
-              worldPos.x + localX,
-              worldPos.y + localZ * Math.sin(RING_TILT_RADIANS),
-              worldPos.z + localZ * Math.cos(RING_TILT_RADIANS),
-            )
-            _vec.copy(ringWorldPos)
-            const ndc = _vec.clone().project(camera)
-            ndcPoints.push({ x: ndc.x, y: ndc.y })
-          }
-          const ellipse = fitEllipseToNDCPoints(ndcPoints, viewport)
-          result.push({ kind: 'ellipse', ...ellipse })
-        }
       }
     }
 
