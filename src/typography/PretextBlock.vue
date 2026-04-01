@@ -1,19 +1,25 @@
 <!-- src/typography/PretextBlock.vue -->
 <template>
-  <Transition name="prose-fade">
-    <div
-      v-if="lines.length > 0"
-      class="pretext-block"
-      :style="{ top: `${topY}px`, left: `${leftX}px` }"
-    >
-      <span
-        v-for="(line, i) in lines"
-        :key="i"
-        class="pretext-line"
-        :style="{ width: `${line.availableWidth}px` }"
-      >{{ line.text }}</span>
-    </div>
-  </Transition>
+  <div
+    v-if="lines.length > 0"
+    class="pretext-block"
+    :style="{ top: `${topY}px`, left: `${leftX}px` }"
+  >
+    <span
+      v-for="(line, i) in lines"
+      :key="i"
+      class="pretext-line"
+      :class="{ 'is-visible': visible }"
+      :style="{
+        width: `${line.availableWidth}px`,
+        fontSize: `${fontSize}px`,
+        lineHeight: `${lineHeight}px`,
+        transitionDelay: visible
+          ? `${i * 40}ms`
+          : `${(lines.length - 1 - i) * 25}ms`,
+      }"
+    >{{ line.text }}</span>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -23,6 +29,9 @@ defineProps<{
   lines: LayoutLine[]
   topY: number
   leftX: number
+  fontSize: number
+  lineHeight: number
+  visible: boolean
 }>()
 </script>
 
@@ -35,14 +44,16 @@ defineProps<{
 .pretext-line {
   display: block;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 26px;
-  line-height: 46px;
   color: rgba(200, 192, 180, 0.75);
   white-space: nowrap;
   overflow: hidden;
   text-align: right;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.prose-fade-enter-active { transition: opacity 0.4s ease 0.6s; }
-.prose-fade-leave-active { transition: opacity 0.3s ease; }
-.prose-fade-enter-from, .prose-fade-leave-to { opacity: 0; }
+.pretext-line.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
 </style>

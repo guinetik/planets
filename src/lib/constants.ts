@@ -3,12 +3,23 @@
 // Scene
 export const BACKGROUND_COLOR = 0x000000;
 
-// Typography (keep for future Pretext use)
-export const PROSE_FONT = "26px Georgia, serif";
-export const PROSE_LINE_HEIGHT = 46;
-export const TEXT_COLUMN_WIDTH = 0;
-export const TEXT_COLUMN_LEFT_PX = 80;
-export const PROSE_TOP_Y_PX = 80;
+// Typography — responsive to viewport width
+export const PROSE_FONT_SIZE_VW = 1.0; // vw units
+export const PROSE_LINE_HEIGHT_RATIO = 1.7; // relative to font size
+export const TEXT_COLUMN_LEFT_VW = 12; // vw units
+
+export function proseFontSize(): number {
+  return window.innerWidth * PROSE_FONT_SIZE_VW / 100;
+}
+export function proseFont(): string {
+  return `${proseFontSize()}px Georgia, serif`;
+}
+export function proseLineHeight(): number {
+  return proseFontSize() * PROSE_LINE_HEIGHT_RATIO;
+}
+export function textColumnLeftPx(): number {
+  return window.innerWidth * TEXT_COLUMN_LEFT_VW / 100;
+}
 
 // Transition timings
 export const TRANSITION_DURATION_S = 0.8;

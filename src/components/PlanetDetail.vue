@@ -1,7 +1,7 @@
 <!-- src/components/PlanetDetail.vue -->
 <template>
-  <Transition name="fade">
-    <div v-if="planet" class="planet-detail">
+  <Transition name="detail" mode="out-in">
+    <div v-if="planet" :key="planet.id" class="planet-detail">
       <span class="planet-number" :style="{ color: planet.accentColor + '66' }">
         No. {{ String(planet.order).padStart(2, '0') }} — {{ ordinalLabel(planet.order) }} Planet
       </span>
@@ -32,28 +32,40 @@ function ordinalLabel(n: number): string {
 <style scoped>
 .planet-detail {
   position: fixed;
-  top: 100px;
+  top: 80px;
   left: 80px;
   z-index: 5;
   pointer-events: none;
 }
 .planet-number {
   display: block;
-  font-size: 8px;
-  letter-spacing: 4px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.6vw;
+  letter-spacing: 0.25vw;
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 1.2vw;
 }
 .planet-name {
-  font-family: Georgia, serif;
-  font-size: 56px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3.5vw;
   font-weight: normal;
-  letter-spacing: 8px;
+  letter-spacing: 0.4vw;
   text-transform: uppercase;
   line-height: 1;
-  margin-bottom: 40px;
+  margin: 0;
 }
-.fade-enter-active { transition: opacity 0.4s 0.5s; }
-.fade-leave-active { transition: opacity 0.3s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.detail-enter-active {
+  transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
+}
+.detail-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.detail-enter-from {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+.detail-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
 </style>

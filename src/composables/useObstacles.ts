@@ -7,7 +7,7 @@ import type { Obstacle } from '@/lib/obstacles'
 import { ndcToScreen, screenRadius } from '@/lib/projection'
 import type { ViewState } from './useSceneState'
 import {
-  TEXT_COLUMN_LEFT_PX,
+  textColumnLeftPx,
   SUN_RADIUS,
 } from '@/lib/constants'
 
@@ -52,12 +52,12 @@ export function useObstacles(
 
     const { camera } = sceneObjects.value
     const viewport = { width: window.innerWidth, height: window.innerHeight }
-    const textColumnRight = viewport.width - TEXT_COLUMN_LEFT_PX
+    const textColumnRight = viewport.width - textColumnLeftPx()
     const result: Obstacle[] = []
 
     // Always project the sun
     const sunObs = projectSphere(new THREE.Vector3(0, 0, 0), SUN_RADIUS, camera, viewport)
-    if (sunObs.cx + sunObs.r > TEXT_COLUMN_LEFT_PX && sunObs.cx - sunObs.r < textColumnRight) {
+    if (sunObs.cx + sunObs.r > textColumnLeftPx() && sunObs.cx - sunObs.r < textColumnRight) {
       result.push(sunObs)
     }
 
@@ -72,7 +72,7 @@ export function useObstacles(
 
       const obs = projectSphere(worldPos, planetWorldRadius, camera, viewport)
       // Only include if it could potentially overlap the text column
-      if (obs.cx + obs.r > TEXT_COLUMN_LEFT_PX && obs.cx - obs.r < textColumnRight + 100) {
+      if (obs.cx + obs.r > textColumnLeftPx() && obs.cx - obs.r < textColumnRight + 100) {
         result.push(obs)
       }
 
@@ -84,7 +84,7 @@ export function useObstacles(
           const moonGeomRadius = (moon.meshRef.mesh.geometry as THREE.SphereGeometry).parameters.radius
           const moonWorldRadius = moonGeomRadius * entry.planetGroup.scale.x
           const moonObs = projectSphere(moonWorldPos, moonWorldRadius, camera, viewport)
-          if (moonObs.cx + moonObs.r > TEXT_COLUMN_LEFT_PX && moonObs.cx - moonObs.r < textColumnRight) {
+          if (moonObs.cx + moonObs.r > textColumnLeftPx() && moonObs.cx - moonObs.r < textColumnRight) {
             result.push(moonObs)
           }
         }

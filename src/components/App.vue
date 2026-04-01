@@ -12,10 +12,14 @@
       :camera="activeCamera"
     />
     <router-view />
+    <PlanetDetail :planet-id="activePlanetId" />
     <PretextBlock
       :lines="proseLines"
       :top-y="proseStartY"
       :left-x="proseLeftX"
+      :font-size="proseFontSize"
+      :line-height="proseLineHeight"
+      :visible="proseVisible"
     />
   </div>
 </template>
@@ -34,6 +38,7 @@ import { useSceneState } from '@/composables/useSceneState'
 import { createOrbitControls } from '@/three/controls'
 import { PLANET_IDS, PLANETS, SUN, getPlanet } from '@/lib/planets'
 import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
+import PlanetDetail from './PlanetDetail.vue'
 import PretextBlock from '@/typography/PretextBlock.vue'
 import { usePretextLayout } from '@/composables/usePretextLayout'
 
@@ -50,7 +55,7 @@ const sunMeshRef = shallowRef<THREE.Mesh | null>(null)
 const sunUniformsRef = shallowRef<Record<string, THREE.IUniform>>({})
 const sceneReady = ref(false)
 const { view, activePlanetId, selectPlanet, returnToOverview } = useSceneState(sceneObjects, planetEntries, controlsRef, sunMeshRef)
-const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, updateCurveLayout, clearLayout } = usePretextLayout(sceneObjects)
+const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, fontSize: proseFontSize, lineHeight: proseLineHeight, visible: proseVisible, updateCurveLayout, transitionTo, hideAndThen, clearLayout } = usePretextLayout(sceneObjects)
 
 const activeCamera = computed(() => sceneObjects.value?.camera ?? null)
 
@@ -86,7 +91,9 @@ watch(() => route.params.planetId as string | undefined, (planetId) => {
   if (planetId && PLANET_IDS.includes(planetId)) {
     if (activePlanetId.value !== planetId) selectPlanet(planetId)
   } else {
-    if (view.value !== 'overview') returnToOverview()
+    if (view.value !== 'overview') {
+      hideAndThen(() => returnToOverview())
+    }
   }
 })
 
@@ -171,7 +178,10 @@ watch(sceneObjects, async (objs) => {
       const entry = planetEntries.value.find(e => e.id === activePlanetId.value)
       if (entry) {
         const planet = getPlanet(entry.id)
-        updateCurveLayout(planet.prose.join('\n\n'), entry)
+        const prose = planet.prose.join('\n\n')
+        // transitionTo handles animation; updateCurveLayout keeps position in sync each frame
+        transitionTo(activePlanetId.value, prose, entry)
+        updateCurveLayout(prose, entry)
       }
     } else {
       clearLayout()

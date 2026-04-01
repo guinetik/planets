@@ -18,6 +18,11 @@ import {
 /** Fixed world-space position where the planet sits during detail view. */
 const DETAIL_PLANET_POS = new THREE.Vector3(0, 0, 0)
 
+/** Per-planet scale overrides for the detail view (1.0 = default). */
+const DETAIL_SCALE: Record<string, number> = {
+  earth: 1.2,
+}
+
 /** How far the camera pulls back during planet-to-planet switch. */
 const PULLBACK_DISTANCE = 5
 
@@ -142,7 +147,8 @@ export function transitionToDetail(
   controls.enabled = false
 
   const planetData = PLANETS.find(p => p.id === entry.id)!
-  const planetVisualRadius = planetData.displayRadius * SIZE_SCALE
+  const scale = DETAIL_SCALE[entry.id] ?? 1.0
+  const planetVisualRadius = planetData.displayRadius * SIZE_SCALE * scale
   const detail = computeDetailCamera(planetVisualRadius, camera.aspect)
 
   entry.planetGroup.visible = true
