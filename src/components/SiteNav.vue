@@ -1,7 +1,7 @@
 <!-- src/components/SiteNav.vue -->
 <template>
   <header class="site-nav">
-    <button class="wordmark" @click="emit('home')">Planets</button>
+    <button class="wordmark" @click="emit('home')">Planetarium</button>
     <nav class="planet-nav">
       <button
         v-for="planet in PLANETS"
