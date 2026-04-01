@@ -20,6 +20,7 @@ export interface SceneObjects {
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
   composer: EffectComposer;
+  detailLight: THREE.DirectionalLight;
 }
 
 export function createScene(canvas: HTMLCanvasElement): SceneObjects {
@@ -66,6 +67,11 @@ export function createScene(canvas: HTMLCanvasElement): SceneObjects {
   camera.add(cameraLight);
   scene.add(camera); // camera must be in scene graph for its children to render
 
+  // Key light for detail view — starts off, transitions fade it in/out
+  const detailLight = new THREE.DirectionalLight(0xffeedd, 0);
+  detailLight.position.set(-2, 1.5, 3);
+  scene.add(detailLight);
+
   // Post-processing
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -78,7 +84,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneObjects {
   );
   composer.addPass(bloomPass);
 
-  return { scene, camera, renderer, composer };
+  return { scene, camera, renderer, composer, detailLight };
 }
 
 export function handleResize(

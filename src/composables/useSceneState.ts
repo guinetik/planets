@@ -31,7 +31,7 @@ export function useSceneState(
     view.value = 'detail'
     activePlanetId.value = id
 
-    transitionToDetail(entry, planetEntries.value, objs.camera, controls, sunMeshRef.value, previousEntry)
+    transitionToDetail(entry, planetEntries.value, objs.camera, controls, sunMeshRef.value, previousEntry, objs.detailLight)
   }
 
   function returnToOverview(): void {
@@ -40,7 +40,7 @@ export function useSceneState(
     if (!objs || !controls) return
     view.value = 'overview'
     activePlanetId.value = null
-    transitionToOverview(planetEntries.value, objs.camera, controls, sunMeshRef.value)
+    transitionToOverview(planetEntries.value, objs.camera, controls, sunMeshRef.value, objs.detailLight)
   }
 
   return { view, activePlanetId, selectPlanet, returnToOverview }

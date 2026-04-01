@@ -1,9 +1,10 @@
 // src/composables/usePretextLayout.ts
+import * as THREE from 'three'
 import { ref, nextTick, type Ref } from 'vue'
 import { layoutProseAlongCurve, type LayoutLine, type CurveLayoutConfig } from '@/typography/layout'
+import { projectSphere } from './useObstacles'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
-import { DETAIL_PLANET_X_RATIO, DETAIL_PLANET_SCREEN_HEIGHT_RATIO } from '@/lib/constants'
 
 export function usePretextLayout(
   sceneObjects: Ref<SceneObjects | null>,
@@ -19,36 +20,51 @@ export function usePretextLayout(
   let _hideTimer: ReturnType<typeof setTimeout> | null = null
   let _transitioning = false
 
-  function updateCurveLayout(prose: string, _entry: PlanetEntry): void {
+  function updateCurveLayout(prose: string, entry: PlanetEntry): void {
     if (_transitioning) return
     const objs = sceneObjects.value
     if (!objs) return
 
     const w = window.innerWidth
     const h = window.innerHeight
+    const viewport = { width: w, height: h }
 
-    const screenRadius = (DETAIL_PLANET_SCREEN_HEIGHT_RATIO * h) / 2
-    const cx = w * (1 - DETAIL_PLANET_X_RATIO)
-    const cy = h / 2
+    // Project the actual planet sphere to screen space
+    const worldPos = entry.planetGroup.position.clone()
+    const geomRadius = (entry.planetMeshRef.mesh.geometry as THREE.SphereGeometry).parameters.radius
+    const planetWorldRadius = geomRadius * entry.planetGroup.scale.x
+
+    const circle = projectSphere(worldPos, planetWorldRadius, objs.camera, viewport)
+
+    // Perspective silhouette correction: visual edge > projected equatorial edge
+    const dist = objs.camera.position.distanceTo(worldPos)
+    const ratio = dist > planetWorldRadius
+      ? 1 / Math.sqrt(1 - (planetWorldRadius / dist) ** 2)
+      : 1
+    const screenRadius = circle.r * ratio
+    const cx = circle.cx
+    const cy = circle.cy
 
     const planet = { kind: 'circle' as const, cx, cy, r: screenRadius }
 
-    // The div is positioned near the planet's left edge, shifted 20% further left
-    const divX = (cx - screenRadius) * 0.7
+    // Position div well left of the planet edge
+    const divX = (cx - screenRadius) * 0.22
 
-    // Layout computes widths from a smaller leftX,
-    // so lines are wide and their right edges extend into the planet area.
-    const layoutLeftX = divX * 0.38
+    // Layout uses a smaller leftX so lines extend toward (but not over) the planet
+    const layoutLeftX = divX * 0.3
+
+    // Padding scales with planet size — keeps text off the planet surface
+    const padding = screenRadius * 0.32
 
     const config: CurveLayoutConfig = {
       planet,
-      padding: 0,
+      padding,
       leftX: layoutLeftX,
     }
 
     const result = layoutProseAlongCurve(prose, config)
     lines.value = result.lines
-    startY.value = result.startY - h * 0.1
+    startY.value = result.startY
     leftX.value = divX
     fontSize.value = result.fontSize
     lineHeight.value = result.lineHeight
@@ -72,7 +88,6 @@ export function usePretextLayout(
         _currentPlanetId = planetId
         _transitioning = false
         updateCurveLayout(prose, entry)
-        // Let Vue render new lines at opacity:0, then wait for browser paint
         nextTick(() => {
           requestAnimationFrame(() => {
             visible.value = true

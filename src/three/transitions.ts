@@ -59,6 +59,7 @@ function animateToDetail(
   controls: OrbitControls,
   sunMesh: THREE.Mesh | null,
   detail: ReturnType<typeof computeDetailCamera>,
+  detailLight?: THREE.DirectionalLight | null,
 ) {
   // Move the active planet to the showcase position
   gsap.to(entry.planetGroup.position, {
@@ -111,6 +112,11 @@ function animateToDetail(
     }
   }
 
+  // Fade in detail key light
+  if (detailLight) {
+    gsap.to(detailLight, { intensity: DETAIL_LIGHT_INTENSITY, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+  }
+
   // Animate camera
   const startLookAt = controls.target.clone()
   const lookAtProxy = { x: startLookAt.x, y: startLookAt.y, z: startLookAt.z }
@@ -134,6 +140,8 @@ function animateToDetail(
   })
 }
 
+const DETAIL_LIGHT_INTENSITY = 1.5
+
 export function transitionToDetail(
   entry: PlanetEntry,
   allEntries: PlanetEntry[],
@@ -141,6 +149,7 @@ export function transitionToDetail(
   controls: OrbitControls,
   sunMesh: THREE.Mesh | null,
   previousEntry?: PlanetEntry | null,
+  detailLight?: THREE.DirectionalLight | null,
 ): void {
   controls.enabled = false
 
@@ -161,7 +170,7 @@ export function transitionToDetail(
 
   if (!previousEntry) {
     // Overview → detail: animate directly
-    animateToDetail(entry, allEntries, camera, controls, sunMesh, detail)
+    animateToDetail(entry, allEntries, camera, controls, sunMesh, detail, detailLight)
     return
   }
 
@@ -227,11 +236,17 @@ export function transitionToOverview(
   camera: THREE.PerspectiveCamera,
   controls: OrbitControls,
   sunMesh: THREE.Mesh | null,
+  detailLight?: THREE.DirectionalLight | null,
 ): void {
   controls.enabled = false
 
   const startLookAt = controls.target.clone()
   const lookAtProxy = { x: startLookAt.x, y: startLookAt.y, z: startLookAt.z }
+
+  // Fade out detail key light
+  if (detailLight) {
+    gsap.to(detailLight, { intensity: 0, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+  }
 
   // Restore sun
   if (sunMesh) {

@@ -345,6 +345,16 @@ export function tickPlanets(
     if (entry.planetMeshRef.uniforms.uTime) {
       entry.planetMeshRef.uniforms.uTime.value = shaderTime;
     }
+
+    // Update Earth night-side light direction (world space)
+    if (entry.planetMeshRef.uniforms.uLightDir) {
+      const lightDir = entry.planetMeshRef.uniforms.uLightDir.value as THREE.Vector3;
+      if (inDetail) {
+        lightDir.set(-2, 1.5, 3).normalize();
+      } else {
+        lightDir.copy(entry.planetGroup.position).negate().normalize();
+      }
+    }
     // Update ring shader time
     if (entry.ringUniforms?.uTime) {
       entry.ringUniforms.uTime.value = shaderTime;
