@@ -259,7 +259,7 @@ export async function buildPlanetEntries(
       // so they must scale with SIZE_SCALE (not ORBIT_SCALE) to stay outside the planet body
       const scaledMoonOrbit: OrbitalElements = {
         ...moon.orbit,
-        semiMajorAxis: (moon.orbit.semiMajorAxis * SIZE_SCALE) / 900,
+        semiMajorAxis: (moon.orbit.semiMajorAxis * SIZE_SCALE) / 550,
         epoch: moonEpoch,
       };
 

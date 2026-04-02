@@ -30,15 +30,15 @@ export const TEXT_FADE_DURATION_S = 0.4;
 export const TEXT_FADE_DELAY_S = 0.5;
 
 // Scale factors: gcanvas pixel values → Three.js world units
-export const ORBIT_SCALE = 0.02;
+export const ORBIT_SCALE = 0.03;
 export const SIZE_SCALE = 50.0; // Larger bodies — sun radius ~1.375, Earth ~0.385
 
 // Camera
 export const CAMERA_FOV = 50;
 export const CAMERA_NEAR = 0.1;
 export const CAMERA_FAR = 500;
-export const CAMERA_POSITION_Y = 8;
-export const CAMERA_POSITION_Z = 14;
+export const CAMERA_POSITION_Y = 3;
+export const CAMERA_POSITION_Z = 20;
 
 // Tone mapping
 export const TONE_MAPPING_EXPOSURE = 1.35;
