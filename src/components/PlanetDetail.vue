@@ -8,7 +8,16 @@
       <h1 class="planet-name" :style="{ color: planet.accentColor }">
         {{ planet.name }}
       </h1>
-      <div v-if="telemetry" class="telemetry">
+      <div v-if="telemetry" class="telemetry" :class="{ 'telemetry-bottom': planetId === 'saturn' || planetId === 'uranus' || planetId === 'neptune' }">
+        <div class="telemetry-row">
+          <span class="telemetry-label">Mass</span>
+          <span class="telemetry-value">{{ formatMass(telemetry.massEarths) }}</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Radius</span>
+          <span class="telemetry-value">{{ formatRadius(telemetry.radiusKm) }} <span class="telemetry-unit">km</span></span>
+        </div>
+        <div class="telemetry-divider" />
         <div class="telemetry-row">
           <span class="telemetry-label">Orbit</span>
           <span class="telemetry-chart">{{ telemetry.orbitProgressPie }}</span>
@@ -55,6 +64,17 @@ function ordinalLabel(n: number): string {
   return n + (suffixes[(v - 20) % 10] ?? suffixes[v] ?? suffixes[0])
 }
 
+function formatMass(earths: number): string {
+  if (earths >= 10) return `${earths.toFixed(1)} M⊕`
+  if (earths >= 0.1) return `${earths.toFixed(3)} M⊕`
+  return `${earths.toFixed(4)} M⊕`
+}
+
+function formatRadius(km: number): string {
+  if (km >= 10000) return km.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  return km.toLocaleString('en-US', { maximumFractionDigits: 1 })
+}
+
 function formatLightTravel(minutes: number): string {
   if (minutes < 1) return `${(minutes * 60).toFixed(1)} sec`
   if (minutes < 60) return `${minutes.toFixed(1)} min`
@@ -90,10 +110,22 @@ function formatLightTravel(minutes: number): string {
   margin: 0;
 }
 .telemetry {
-  margin-top: 1.6vw;
+  margin-top: 1vw;
   display: flex;
   flex-direction: column;
-  gap: 0.35vw;
+  gap: 0.08vw;
+}
+.telemetry-divider {
+  width: 3vw;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0.08vw 0;
+}
+.telemetry-bottom {
+  position: fixed;
+  bottom: 80px;
+  left: 80px;
+  margin-top: 0;
 }
 .telemetry-row {
   display: flex;
@@ -102,17 +134,17 @@ function formatLightTravel(minutes: number): string {
 }
 .telemetry-label {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 0.48vw;
-  letter-spacing: 0.15vw;
+  font-size: 0.4vw;
+  letter-spacing: 0.12vw;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
-  min-width: 7vw;
+  color: rgba(255, 255, 255, 0.3);
+  min-width: 6vw;
 }
 .telemetry-value {
   font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-  font-size: 0.55vw;
+  font-size: 0.45vw;
   letter-spacing: 0.05vw;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.55);
   font-variant-numeric: tabular-nums;
 }
 .telemetry-chart {

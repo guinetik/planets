@@ -1,26 +1,29 @@
 <!-- src/components/App.vue -->
 <template>
   <div id="app-root">
+    <LoadingScreen :visible="!assetsLoaded" :progress="loadingProgress" />
     <SceneCanvas ref="canvasComp" />
-    <SiteNav
-      :active-planet-id="activePlanetId"
-      @select="onNavSelect"
-      @home="onHome"
-    />
-    <PlanetLabels
-      :bodies="labelBodies"
-      :camera="activeCamera"
-    />
-    <router-view />
-    <PlanetDetail :planet-id="activePlanetId" :telemetry="telemetry" />
-    <PretextBlock
-      :lines="proseLines"
-      :top-y="proseStartY"
-      :left-x="proseLeftX"
-      :font-size="proseFontSize"
-      :line-height="proseLineHeight"
-      :visible="proseVisible"
-    />
+    <template v-if="assetsLoaded">
+      <SiteNav
+        :active-planet-id="activePlanetId"
+        @select="onNavSelect"
+        @home="onHome"
+      />
+      <PlanetLabels
+        :bodies="labelBodies"
+        :camera="activeCamera"
+      />
+      <router-view />
+      <PlanetDetail :planet-id="activePlanetId" :telemetry="telemetry" />
+      <PretextBlock
+        :lines="proseLines"
+        :top-y="proseStartY"
+        :left-x="proseLeftX"
+        :font-size="proseFontSize"
+        :line-height="proseLineHeight"
+        :visible="proseVisible"
+      />
+    </template>
   </div>
 </template>
 
@@ -39,9 +42,11 @@ import { createOrbitControls } from '@/three/controls'
 import { PLANET_IDS, PLANETS, SUN, getPlanet } from '@/lib/planets'
 import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
 import PlanetDetail from './PlanetDetail.vue'
+import LoadingScreen from './LoadingScreen.vue'
 import PretextBlock from '@/typography/PretextBlock.vue'
 import { usePretextLayout } from '@/composables/usePretextLayout'
 import { computeTelemetry, type TelemetryData } from '@/lib/telemetry'
+import { useLoading } from '@/composables/useLoading'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,6 +63,7 @@ const sceneReady = ref(false)
 const { view, activePlanetId, selectPlanet, returnToOverview } = useSceneState(sceneObjects, planetEntries, controlsRef, sunMeshRef)
 const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, fontSize: proseFontSize, lineHeight: proseLineHeight, visible: proseVisible, updateCurveLayout, transitionTo, hideAndThen, clearLayout } = usePretextLayout(sceneObjects)
 const telemetry = ref<TelemetryData | null>(null)
+const { progress: loadingProgress, loaded: assetsLoaded, markReady } = useLoading()
 
 const activeCamera = computed(() => sceneObjects.value?.camera ?? null)
 
@@ -89,7 +95,7 @@ function onHome() {
 
 // Route → scene state
 watch(() => route.params.planetId as string | undefined, (planetId) => {
-  if (!sceneReady.value) return
+  if (!sceneReady.value || !assetsLoaded.value) return
   if (planetId && PLANET_IDS.includes(planetId)) {
     if (activePlanetId.value !== planetId) selectPlanet(planetId)
   } else {
@@ -111,10 +117,17 @@ watch(sceneObjects, async (objs) => {
   controlsRef.value = controls
 
   sceneReady.value = true
+  markReady()
 
+  // Defer deep-link navigation until assets are loaded
   const initialPlanet = route.params.planetId as string | undefined
   if (initialPlanet && PLANET_IDS.includes(initialPlanet)) {
-    selectPlanet(initialPlanet)
+    const stopWatch = watch(assetsLoaded, (ready) => {
+      if (ready) {
+        selectPlanet(initialPlanet)
+        stopWatch()
+      }
+    }, { immediate: true })
   }
 
   // DEBUG: Press D in detail view to dump camera state
