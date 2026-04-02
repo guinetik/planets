@@ -367,12 +367,14 @@ export function tickPlanets(
     );
 
     // Moons: keep orbiting for active planet, pause for others in detail
-    // In detail view, slow moons further so they don't zip across the close-up frame
-    const moonSpeedDivisor = (inDetail && isActive)
-      ? MOON_ORBIT_SPEED_DIVISOR * 4
-      : MOON_ORBIT_SPEED_DIVISOR;
+    // In detail view, slow fast moons (period < 5 days) so they don't zip across the frame
+    // but leave slow moons like Earth's Moon at normal speed
     for (const moon of entry.moonEntries) {
       if (!inDetail || isActive) {
+        const fastMoon = moon.orbit.period < 5
+        const moonSpeedDivisor = (inDetail && isActive && fastMoon)
+          ? MOON_ORBIT_SPEED_DIVISOR * 4
+          : MOON_ORBIT_SPEED_DIVISOR;
         const moonPos = orbitalPosition3D(
           moon.orbit,
           simTime / moonSpeedDivisor,

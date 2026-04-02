@@ -112,9 +112,15 @@ function animateToDetail(
     }
   }
 
-  // Fade in detail key light
+  // Fade in detail key light, dim camera fill light
   if (detailLight) {
     gsap.to(detailLight, { intensity: DETAIL_LIGHT_INTENSITY, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+  }
+  for (const child of camera.children) {
+    if (child instanceof THREE.PointLight) {
+      child.userData.overviewIntensity ??= child.intensity
+      gsap.to(child, { intensity: 0.15, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+    }
   }
 
   // Animate camera
@@ -140,7 +146,7 @@ function animateToDetail(
   })
 }
 
-const DETAIL_LIGHT_INTENSITY = 1.5
+const DETAIL_LIGHT_INTENSITY = 0.9
 
 export function transitionToDetail(
   entry: PlanetEntry,
@@ -243,9 +249,14 @@ export function transitionToOverview(
   const startLookAt = controls.target.clone()
   const lookAtProxy = { x: startLookAt.x, y: startLookAt.y, z: startLookAt.z }
 
-  // Fade out detail key light
+  // Fade out detail key light, restore camera fill light
   if (detailLight) {
     gsap.to(detailLight, { intensity: 0, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+  }
+  for (const child of camera.children) {
+    if (child instanceof THREE.PointLight) {
+      gsap.to(child, { intensity: child.userData.overviewIntensity ?? 0.55, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
+    }
   }
 
   // Restore sun

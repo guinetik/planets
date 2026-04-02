@@ -45,9 +45,35 @@ const REAL_ROTATION_HOURS: Record<string, number> = {
   neptune: 16.11,
 }
 
+// Mass in Earth masses
+const REAL_MASS_EARTH: Record<string, number> = {
+  mercury: 0.0553,
+  venus: 0.815,
+  earth: 1.0,
+  mars: 0.107,
+  jupiter: 317.8,
+  saturn: 95.16,
+  uranus: 14.54,
+  neptune: 17.15,
+}
+
+// Equatorial radius in km
+const REAL_RADIUS_KM: Record<string, number> = {
+  mercury: 2439.7,
+  venus: 6051.8,
+  earth: 6371.0,
+  mars: 3389.5,
+  jupiter: 69911,
+  saturn: 58232,
+  uranus: 25362,
+  neptune: 24622,
+}
+
 const SPEED_OF_LIGHT_AU_PER_MIN = 0.002004 // ~1 AU in 8.317 minutes
 
 export interface TelemetryData {
+  massEarths: number
+  radiusKm: number
   solarDistanceAU: number
   orbitalVelocityKmS: number
   trueAnomalyDeg: number
@@ -174,6 +200,8 @@ export function computeTelemetry(
   const distanceSparkline = toSparkline(distHist)
 
   return {
+    massEarths: REAL_MASS_EARTH[planetId] ?? 1.0,
+    radiusKm: REAL_RADIUS_KM[planetId] ?? 6371,
     solarDistanceAU: currentAU,
     orbitalVelocityKmS: vKmS,
     trueAnomalyDeg: ((nu * DEG) % 360 + 360) % 360,

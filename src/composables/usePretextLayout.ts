@@ -6,6 +6,7 @@ import { projectSphere } from './useObstacles'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
 import type { ScreenCircle } from '@/lib/obstacles'
+import { getPlanet } from '@/lib/planets'
 
 export function usePretextLayout(
   sceneObjects: Ref<SceneObjects | null>,
@@ -80,12 +81,17 @@ export function usePretextLayout(
       }
     }
 
+    // For ringed planets, shift text upward so it sits above the ring crossing zone
+    const planetData = getPlanet(entry.id)
+    const verticalBias = planetData.ring ? -screenRadius * 0.35 : 0
+
     const config: CurveLayoutConfig = {
       planet,
       padding,
       leftX: layoutLeftX,
       moons: moonCircles.length > 0 ? moonCircles : undefined,
       moonPadding: padding * 0.85,
+      verticalBias,
     }
 
     const result = layoutProseAlongCurve(prose, config)

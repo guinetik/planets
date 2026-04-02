@@ -104,6 +104,7 @@ export interface CurveLayoutConfig {
   leftX: number
   moons?: ScreenCircle[]
   moonPadding?: number
+  verticalBias?: number
 }
 
 export interface CurveLayoutResult {
@@ -160,7 +161,7 @@ export function layoutProseAlongCurve(
   prose: string,
   config: CurveLayoutConfig,
 ): CurveLayoutResult {
-  const { planet, padding, leftX, moons, moonPadding } = config
+  const { planet, padding, leftX, moons, moonPadding, verticalBias = 0 } = config
   const prepared = getPrepared(prose)
   const lineH = proseLineHeight()
   const fontSize = parseFloat(proseFont())
@@ -185,9 +186,10 @@ export function layoutProseAlongCurve(
     lineIndex++
   }
 
-  // Pass 2: lay out centered on the planet, now accounting for moons
+  // Pass 2: lay out centered on the planet, with optional vertical bias
+  // (e.g. ringed planets shift text upward to avoid ring crossing zone)
   const textHeight = lineCount * lineH
-  const startY = planet.cy - textHeight / 2
+  const startY = planet.cy - textHeight / 2 + verticalBias
 
   cursor = { segmentIndex: 0, graphemeIndex: 0 }
   const lines: LayoutLine[] = []
