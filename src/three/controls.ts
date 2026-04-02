@@ -10,11 +10,13 @@ export function createOrbitControls(
 ): OrbitControls {
   const controls = new OrbitControls(camera, domElement)
   controls.enableDamping = true
-  controls.dampingFactor = 0.05
+  controls.dampingFactor = 0.03
   controls.minDistance = 2
   controls.maxDistance = 60
   controls.maxPolarAngle = Math.PI * 0.85
   controls.minPolarAngle = Math.PI * 0.05
+  controls.zoomSpeed = 0.5
+  controls.rotateSpeed = 0.4
   return controls
 }
 

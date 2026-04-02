@@ -13,6 +13,7 @@ import {
   DETAIL_PLANET_X_RATIO,
   ORBIT_PATH_OPACITY,
   CAMERA_FOV,
+  MOON_ORBIT_PATH_OPACITY,
 } from '@/lib/constants'
 
 /** Fixed world-space position where the planet sits during detail view. */
@@ -290,8 +291,13 @@ export function transitionToOverview(
     }
   }
 
+  const maxOrbitRadius = Math.max(...entries.map(e => e.orbit.semiMajorAxis))
+  const halfVFov = (CAMERA_FOV / 2) * Math.PI / 180
+  const halfHFov = Math.atan(Math.tan(halfVFov) * camera.aspect)
+  const fitZ = (maxOrbitRadius * 1.15) / Math.tan(halfHFov)
+
   gsap.to(camera.position, {
-    x: 0, y: CAMERA_POSITION_Y, z: CAMERA_POSITION_Z,
+    x: 0, y: CAMERA_POSITION_Y, z: fitZ,
     duration: TRANSITION_DURATION_S,
     ease: 'power2.inOut',
   })
@@ -313,4 +319,130 @@ export function transitionToOverview(
       controls.enabled = true
     },
   })
+}
+
+const INTRO_DURATION = 2.5
+
+/** Intro animation: camera swoops from above, planets and sun fade in. */
+export function playIntroAnimation(
+  entries: PlanetEntry[],
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls,
+  sunMesh: THREE.Mesh | null,
+  onComplete?: () => void,
+): void {
+  controls.enabled = false
+
+  // Start everything invisible
+  if (sunMesh) {
+    sunMesh.visible = true
+    sunMesh.scale.setScalar(0.01)
+    for (const child of sunMesh.children) {
+      if (child instanceof THREE.Sprite) {
+        child.material.opacity = 0
+      }
+    }
+  }
+
+  for (const entry of entries) {
+    entry.planetGroup.visible = true
+    const mat = entry.planetMeshRef.mesh.material as THREE.Material
+    mat.transparent = true
+    mat.opacity = 0
+
+    // Hide orbit lines initially
+    if (entry.orbitLine) {
+      entry.orbitLine.visible = true
+      const lineMat = entry.orbitLine.material as THREE.LineBasicMaterial
+      lineMat.opacity = 0
+    }
+    for (const child of entry.planetGroup.children) {
+      if (child instanceof THREE.LineLoop) {
+        const lineMat = child.material as THREE.LineBasicMaterial
+        lineMat.opacity = 0
+      }
+    }
+  }
+
+  // Compute Z so the whole solar system fits the viewport width
+  const maxOrbitRadius = Math.max(...entries.map(e => e.orbit.semiMajorAxis))
+  const halfVFov = (CAMERA_FOV / 2) * Math.PI / 180
+  const halfHFov = Math.atan(Math.tan(halfVFov) * camera.aspect)
+  const fitZ = (maxOrbitRadius * 1.15) / Math.tan(halfHFov) // 15% padding
+
+  // Camera swoop from above to fitted position
+  const lookAtProxy = { x: 0, y: 0, z: 0 }
+  gsap.to(camera.position, {
+    x: 0,
+    y: CAMERA_POSITION_Y,
+    z: fitZ,
+    duration: INTRO_DURATION,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      camera.lookAt(lookAtProxy.x, lookAtProxy.y, lookAtProxy.z)
+    },
+    onComplete: () => {
+      controls.target.set(0, 0, 0)
+      controls.enabled = true
+      onComplete?.()
+    },
+  })
+
+  // Sun scales up
+  if (sunMesh) {
+    gsap.to(sunMesh.scale, {
+      x: 1, y: 1, z: 1,
+      duration: INTRO_DURATION * 0.6,
+      ease: 'power2.out',
+    })
+    for (const child of sunMesh.children) {
+      if (child instanceof THREE.Sprite) {
+        gsap.to(child.material, {
+          opacity: 1,
+          duration: INTRO_DURATION * 0.8,
+          delay: INTRO_DURATION * 0.2,
+        })
+      }
+    }
+  }
+
+  // Planets fade in proportional to distance from the sun
+  const maxAxis = Math.max(...entries.map(e => e.orbit.semiMajorAxis))
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]
+    const distFraction = entry.orbit.semiMajorAxis / maxAxis
+    const delay = 0.15 + distFraction * 1.8
+    const mat = entry.planetMeshRef.mesh.material as THREE.Material
+
+    gsap.to(mat, {
+      opacity: 1,
+      duration: 1.2,
+      delay,
+      onComplete: () => {
+        mat.transparent = false
+      },
+    })
+
+    // Orbit lines fade in
+    if (entry.orbitLine) {
+      const lineMat = entry.orbitLine.material as THREE.LineBasicMaterial
+      gsap.to(lineMat, {
+        opacity: ORBIT_PATH_OPACITY,
+        duration: 1.0,
+        delay: delay + 0.3,
+      })
+    }
+
+    // Moon orbit lines
+    for (const child of entry.planetGroup.children) {
+      if (child instanceof THREE.LineLoop) {
+        const lineMat = child.material as THREE.LineBasicMaterial
+        gsap.to(lineMat, {
+          opacity: MOON_ORBIT_PATH_OPACITY,
+          duration: 1.0,
+          delay: delay + 0.5,
+        })
+      }
+    }
+  }
 }

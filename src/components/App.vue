@@ -39,7 +39,8 @@ import { useScene } from '@/composables/useScene'
 import { buildPlanetEntries, tickPlanets, type PlanetEntry } from '@/composables/usePlanets'
 import { useSceneState } from '@/composables/useSceneState'
 import { createOrbitControls } from '@/three/controls'
-import { PLANET_IDS, PLANETS, SUN, getPlanet } from '@/lib/planets'
+import { playIntroAnimation } from '@/three/transitions'
+import { PLANET_IDS, PLANETS, SUN, getPlanet, loadPlanetarium } from '@/lib/planets'
 import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
 import PlanetDetail from './PlanetDetail.vue'
 import LoadingScreen from './LoadingScreen.vue'
@@ -108,6 +109,7 @@ watch(() => route.params.planetId as string | undefined, (planetId) => {
 watch(sceneObjects, async (objs) => {
   if (!objs) return
 
+  await loadPlanetarium()
   const built = await buildPlanetEntries(objs.scene)
   planetEntries.value = built.entries
   sunMeshRef.value = built.sunObjects.mesh
@@ -119,16 +121,24 @@ watch(sceneObjects, async (objs) => {
   sceneReady.value = true
   markReady()
 
-  // Defer deep-link navigation until assets are loaded
+  // Play intro or deep-link after assets are loaded
   const initialPlanet = route.params.planetId as string | undefined
-  if (initialPlanet && PLANET_IDS.includes(initialPlanet)) {
-    const stopWatch = watch(assetsLoaded, (ready) => {
-      if (ready) {
-        selectPlanet(initialPlanet)
-        stopWatch()
-      }
-    }, { immediate: true })
-  }
+  const stopWatch = watch(assetsLoaded, (ready) => {
+    if (!ready) return
+    stopWatch()
+    if (initialPlanet && PLANET_IDS.includes(initialPlanet)) {
+      // Deep-link: skip intro, go straight to planet
+      selectPlanet(initialPlanet)
+    } else {
+      // Normal entry: play the intro swoop
+      playIntroAnimation(
+        planetEntries.value,
+        objs.camera,
+        controls,
+        sunMeshRef.value,
+      )
+    }
+  }, { immediate: true })
 
   // DEBUG: Press D in detail view to dump camera state
   // Press E to re-enable OrbitControls for manual positioning

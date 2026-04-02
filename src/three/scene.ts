@@ -58,7 +58,8 @@ export function createScene(canvas: HTMLCanvasElement): SceneObjects {
     CAMERA_NEAR,
     CAMERA_FAR,
   );
-  camera.position.set(0, CAMERA_POSITION_Y, CAMERA_POSITION_Z);
+  // Start high above for intro swoop — will animate to final position
+  camera.position.set(0, 40, 2);
   camera.lookAt(0, 0, 0);
 
   // Soft camera fill to keep close fly-bys readable without overpowering the sun
