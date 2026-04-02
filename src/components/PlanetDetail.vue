@@ -177,4 +177,56 @@ function formatLightTravel(minutes: number): string {
   opacity: 0;
   transform: translateY(12px);
 }
+
+/* Mobile: title below nav top-left, telemetry bottom-left */
+@media (max-width: 1024px) {
+  .planet-detail {
+    top: 80px;
+    left: 20px;
+    right: auto;
+  }
+  .planet-number {
+    font-size: 2.2vw;
+    letter-spacing: 0.5vw;
+    margin-bottom: 2vw;
+  }
+  .planet-name {
+    font-size: 8vw;
+    letter-spacing: 1vw;
+  }
+  .telemetry,
+  .telemetry.telemetry-bottom {
+    position: fixed;
+    bottom: 24px;
+    left: 20px;
+    right: auto;
+    margin-top: 0;
+    align-items: flex-start;
+  }
+  .telemetry-row {
+    display: grid;
+    grid-template-columns: 32vw 14vw auto;
+    gap: 0;
+    align-items: baseline;
+  }
+  .telemetry-label {
+    font-size: 2.6vw;
+    letter-spacing: 0.2vw;
+    min-width: auto;
+  }
+  .telemetry-value {
+    font-size: 2.8vw;
+    letter-spacing: 0.1vw;
+    white-space: nowrap;
+  }
+  .telemetry-chart {
+    font-size: 5vw;
+  }
+  .telemetry-unit {
+    font-size: 2.4vw;
+  }
+  .telemetry-divider {
+    width: 10vw;
+  }
+}
 </style>

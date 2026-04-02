@@ -97,9 +97,19 @@ export const LABEL_FONT = "11px monospace";
 export const LABEL_COLOR = "#999999";
 export const LABEL_OFFSET_Y = 18;
 
+// Responsive
+export const MOBILE_BREAKPOINT = 1024;
+export function isMobile(): boolean {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
 // Detail view
 export const DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 0.8;
 export const DETAIL_PLANET_X_RATIO = 0.285;
+
+// Detail view — mobile overrides (planet centered, filling ~50% of screen)
+export const MOBILE_DETAIL_PLANET_SCREEN_HEIGHT_RATIO = 0.45;
+export const MOBILE_DETAIL_PLANET_X_RATIO = 0.5;
 
 // Obstacle projection
 export const SUN_RADIUS = 0.045 * 50.0; // SUN.displayRadius * SIZE_SCALE

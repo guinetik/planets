@@ -14,6 +14,8 @@
         width: `${line.availableWidth}px`,
         fontSize: `${fontSize}px`,
         lineHeight: `${lineHeight}px`,
+        marginLeft: line.offsetX ? `${line.offsetX}px` : undefined,
+        textAlign: line.centered ? 'center' : undefined,
         transitionDelay: visible
           ? `${i * 40}ms`
           : `${(lines.length - 1 - i) * 25}ms`,
@@ -55,5 +57,15 @@ defineProps<{
 .pretext-line.is-visible {
   opacity: 1;
   transform: translateX(0);
+}
+
+@media (max-width: 1024px) {
+  .pretext-line {
+    text-shadow:
+      0 0 4px rgba(0, 0, 0, 0.9),
+      0 0 8px rgba(0, 0, 0, 0.7),
+      0 1px 2px rgba(0, 0, 0, 0.8);
+    color: rgba(220, 215, 205, 0.85);
+  }
 }
 </style>

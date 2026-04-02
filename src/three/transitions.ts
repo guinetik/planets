@@ -11,9 +11,12 @@ import {
   SIZE_SCALE,
   DETAIL_PLANET_SCREEN_HEIGHT_RATIO,
   DETAIL_PLANET_X_RATIO,
+  MOBILE_DETAIL_PLANET_SCREEN_HEIGHT_RATIO,
+  MOBILE_DETAIL_PLANET_X_RATIO,
   ORBIT_PATH_OPACITY,
   CAMERA_FOV,
   MOON_ORBIT_PATH_OPACITY,
+  isMobile,
 } from '@/lib/constants'
 
 /** Fixed world-space position where the planet sits during detail view. */
@@ -29,12 +32,16 @@ function computeDetailCamera(
   planetVisualRadius: number,
   aspect: number,
 ) {
+  const mobile = isMobile()
+  const heightRatio = mobile ? MOBILE_DETAIL_PLANET_SCREEN_HEIGHT_RATIO : DETAIL_PLANET_SCREEN_HEIGHT_RATIO
+  const xRatio = mobile ? MOBILE_DETAIL_PLANET_X_RATIO : DETAIL_PLANET_X_RATIO
+
   const halfFOV = (CAMERA_FOV / 2) * Math.PI / 180
   const tanHalf = Math.tan(halfFOV)
 
-  const distance = planetVisualRadius / (tanHalf * DETAIL_PLANET_SCREEN_HEIGHT_RATIO)
+  const distance = planetVisualRadius / (tanHalf * heightRatio)
 
-  const ndcX = 2 * (1 - DETAIL_PLANET_X_RATIO) - 1
+  const ndcX = 2 * (1 - xRatio) - 1
   const offsetX = ndcX * aspect * tanHalf * distance
 
   const target = new THREE.Vector3(

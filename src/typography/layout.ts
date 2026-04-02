@@ -11,6 +11,8 @@ export interface LayoutLine {
   text: string
   width: number
   availableWidth: number  // max width at this line's Y — used for right-alignment
+  offsetX?: number        // per-line horizontal offset from block's leftX (used by circular layout)
+  centered?: boolean      // if true, text is centered within availableWidth
 }
 
 const MIN_LINE_WIDTH = 60  // never collapse lines below this
@@ -210,4 +212,142 @@ export function layoutProseAlongCurve(
   }
 
   return { lines, startY, fontSize, lineHeight: lineH }
+}
+
+export interface CircleLayoutConfig {
+  cx: number
+  cy: number
+  r: number
+  padding: number       // inset from circle edge
+  fontSizePx: number    // explicit font size for mobile
+  lineHeightPx: number
+  moons?: ScreenCircle[]
+  moonPadding?: number
+}
+
+/**
+ * Compute the available width inside the planet circle at a given Y,
+ * subtracting any moon intrusions. Returns the left edge, right edge,
+ * and width of the widest clear span, or null if too narrow.
+ */
+function circleChordAtY(
+  y: number,
+  cx: number,
+  cy: number,
+  insetR: number,
+  moons?: ScreenCircle[],
+  moonPadding?: number,
+): { left: number; right: number; width: number } | null {
+  const dy = y - cy
+  if (Math.abs(dy) >= insetR) return null
+  const halfChord = Math.sqrt(insetR ** 2 - dy ** 2)
+  let left = cx - halfChord
+  let right = cx + halfChord
+
+  if (moons) {
+    const mPad = moonPadding ?? 0
+    for (const moon of moons) {
+      const mdy = y - moon.cy
+      if (Math.abs(mdy) >= moon.r + mPad) continue
+      const effectiveR = moon.r + mPad
+      if (Math.abs(mdy) >= effectiveR) continue
+      const moonHalf = Math.sqrt(effectiveR ** 2 - mdy ** 2)
+      const moonLeft = moon.cx - moonHalf
+      const moonRight = moon.cx + moonHalf
+
+      // Moon must overlap our chord
+      if (moonRight <= left || moonLeft >= right) continue
+
+      // Pick the wider remaining segment (left of moon vs right of moon)
+      const leftSegment = Math.max(0, Math.min(moonLeft, right) - left)
+      const rightSegment = Math.max(0, right - Math.max(moonRight, left))
+
+      if (leftSegment >= rightSegment) {
+        right = Math.min(moonLeft, right)
+      } else {
+        left = Math.max(moonRight, left)
+      }
+    }
+  }
+
+  const width = right - left
+  return width >= MIN_LINE_WIDTH ? { left, right, width } : null
+}
+
+/**
+ * Lays out prose text INSIDE a circle — each line's width is the chord
+ * at that Y minus padding. Text is centered within each chord.
+ * Moons carve gaps: lines narrow or shift to avoid moon silhouettes.
+ * Two-pass: measure line count, then center vertically.
+ */
+export function layoutProseInsideCircle(
+  prose: string,
+  config: CircleLayoutConfig,
+): CurveLayoutResult {
+  const { cx, cy, r, padding, fontSizePx, lineHeightPx, moons, moonPadding } = config
+  const font = `${fontSizePx}px Georgia, serif`
+  const prepared = prepareWithSegments(prose, font)
+  const insetR = r - padding
+
+  if (insetR < MIN_LINE_WIDTH / 2) {
+    return { lines: [], startY: cy, fontSize: fontSizePx, lineHeight: lineHeightPx }
+  }
+
+  // Pass 1: lay out from top to count lines (ignore moons — they're transient)
+  const topY = cy - insetR
+  let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
+  let lineCount = 0
+  let lineIndex = 0
+
+  while (true) {
+    const lineY = topY + lineIndex * lineHeightPx
+    const chord = circleChordAtY(lineY, cx, cy, insetR)
+    if (chord === null) {
+      if (lineY > cy) break
+      lineIndex++
+      continue
+    }
+    if (chord.width < MIN_LINE_WIDTH) { lineIndex++; continue }
+    const result = layoutNextLine(prepared, cursor, chord.width)
+    if (result === null) break
+    cursor = result.end
+    lineCount++
+    lineIndex++
+  }
+
+  // Pass 2: lay out centered vertically, with moon avoidance
+  const textHeight = lineCount * lineHeightPx
+  const startY = cy - textHeight / 2
+  const blockLeftX = cx - insetR
+
+  cursor = { segmentIndex: 0, graphemeIndex: 0 }
+  const lines: LayoutLine[] = []
+  lineIndex = 0
+
+  while (true) {
+    const lineY = startY + lineIndex * lineHeightPx
+    const chord = circleChordAtY(lineY, cx, cy, insetR, moons, moonPadding)
+    if (chord === null) {
+      if (lineY > cy + insetR) break
+      lineIndex++
+      continue
+    }
+    if (chord.width < MIN_LINE_WIDTH) { lineIndex++; continue }
+    const result = layoutNextLine(prepared, cursor, chord.width)
+    if (result === null) break
+
+    const offsetX = chord.left - blockLeftX
+
+    lines.push({
+      text: result.text,
+      width: result.width,
+      availableWidth: chord.width,
+      offsetX,
+      centered: true,
+    })
+    cursor = result.end
+    lineIndex++
+  }
+
+  return { lines, startY, fontSize: fontSizePx, lineHeight: lineHeightPx }
 }

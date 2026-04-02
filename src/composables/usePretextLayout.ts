@@ -1,12 +1,13 @@
 // src/composables/usePretextLayout.ts
 import * as THREE from 'three'
 import { ref, nextTick, type Ref } from 'vue'
-import { layoutProseAlongCurve, type LayoutLine, type CurveLayoutConfig } from '@/typography/layout'
+import { layoutProseAlongCurve, layoutProseInsideCircle, type LayoutLine, type CurveLayoutConfig } from '@/typography/layout'
 import { projectSphere } from './useObstacles'
 import type { PlanetEntry } from './usePlanets'
 import type { SceneObjects } from '@/three/scene'
 import type { ScreenCircle } from '@/lib/obstacles'
 import { getPlanet } from '@/lib/planets'
+import { isMobile } from '@/lib/constants'
 
 export function usePretextLayout(
   sceneObjects: Ref<SceneObjects | null>,
@@ -46,6 +47,51 @@ export function usePretextLayout(
     const screenRadius = circle.r * ratio
     const cx = circle.cx
     const cy = circle.cy
+
+    // Mobile: circular text layout inside the planet silhouette
+    if (isMobile()) {
+      // Project moons that overlap the planet disc
+      const moonCircles: ScreenCircle[] = []
+      for (const moon of entry.moonEntries) {
+        const moonWorldPos = new THREE.Vector3()
+        moon.meshRef.mesh.getWorldPosition(moonWorldPos)
+        const moonGeomRadius = (moon.meshRef.mesh.geometry as THREE.SphereGeometry).parameters.radius
+        const moonWorldRadius = moonGeomRadius * entry.planetGroup.scale.x
+        const moonCircle = projectSphere(moonWorldPos, moonWorldRadius, objs.camera, viewport)
+
+        const moonDist = objs.camera.position.distanceTo(moonWorldPos)
+        const moonRatio = moonDist > moonWorldRadius
+          ? 1 / Math.sqrt(1 - (moonWorldRadius / moonDist) ** 2)
+          : 1
+        const correctedMoonR = moonCircle.r * moonRatio
+
+        // Include if the moon overlaps the planet circle
+        const distBetween = Math.sqrt((moonCircle.cx - cx) ** 2 + (moonCircle.cy - cy) ** 2)
+        if (distBetween < screenRadius + correctedMoonR) {
+          moonCircles.push({ kind: 'circle', cx: moonCircle.cx, cy: moonCircle.cy, r: correctedMoonR })
+        }
+      }
+
+      const mobileFontSize = Math.max(9, screenRadius * 0.055)
+      const mobileLineHeight = mobileFontSize * 1.6
+      const circlePadding = screenRadius * 0.12
+      const result = layoutProseInsideCircle(prose, {
+        cx,
+        cy,
+        r: screenRadius,
+        padding: circlePadding,
+        fontSizePx: mobileFontSize,
+        lineHeightPx: mobileLineHeight,
+        moons: moonCircles.length > 0 ? moonCircles : undefined,
+        moonPadding: circlePadding * 0.6,
+      })
+      lines.value = result.lines
+      startY.value = result.startY
+      leftX.value = cx - (screenRadius - circlePadding)
+      fontSize.value = result.fontSize
+      lineHeight.value = result.lineHeight
+      return
+    }
 
     const planet = { kind: 'circle' as const, cx, cy, r: screenRadius }
 
