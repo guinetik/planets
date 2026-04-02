@@ -12,7 +12,7 @@
       :camera="activeCamera"
     />
     <router-view />
-    <PlanetDetail :planet-id="activePlanetId" />
+    <PlanetDetail :planet-id="activePlanetId" :telemetry="telemetry" />
     <PretextBlock
       :lines="proseLines"
       :top-y="proseStartY"
@@ -41,6 +41,7 @@ import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
 import PlanetDetail from './PlanetDetail.vue'
 import PretextBlock from '@/typography/PretextBlock.vue'
 import { usePretextLayout } from '@/composables/usePretextLayout'
+import { computeTelemetry, type TelemetryData } from '@/lib/telemetry'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,6 +57,7 @@ const sunUniformsRef = shallowRef<Record<string, THREE.IUniform>>({})
 const sceneReady = ref(false)
 const { view, activePlanetId, selectPlanet, returnToOverview } = useSceneState(sceneObjects, planetEntries, controlsRef, sunMeshRef)
 const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, fontSize: proseFontSize, lineHeight: proseLineHeight, visible: proseVisible, updateCurveLayout, transitionTo, hideAndThen, clearLayout } = usePretextLayout(sceneObjects)
+const telemetry = ref<TelemetryData | null>(null)
 
 const activeCamera = computed(() => sceneObjects.value?.camera ?? null)
 
@@ -182,8 +184,10 @@ watch(sceneObjects, async (objs) => {
         // transitionTo handles animation; updateCurveLayout keeps position in sync each frame
         transitionTo(activePlanetId.value, prose, entry)
         updateCurveLayout(prose, entry)
+        telemetry.value = computeTelemetry(entry.id, planet.orbit, simTime)
       }
     } else {
+      telemetry.value = null
       clearLayout()
     }
   })

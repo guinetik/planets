@@ -8,6 +8,31 @@
       <h1 class="planet-name" :style="{ color: planet.accentColor }">
         {{ planet.name }}
       </h1>
+      <div v-if="telemetry" class="telemetry">
+        <div class="telemetry-row">
+          <span class="telemetry-label">Orbit</span>
+          <span class="telemetry-chart">{{ telemetry.orbitProgressPie }}</span>
+          <span class="telemetry-value">{{ telemetry.trueAnomalyDeg.toFixed(2) }}<span class="telemetry-unit">°</span></span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Solar Distance</span>
+          <span class="telemetry-chart" v-if="telemetry.distanceSparkline">{{ telemetry.distanceSparkline }}</span>
+          <span class="telemetry-value">{{ telemetry.solarDistanceAU.toFixed(4) }} <span class="telemetry-unit">AU</span></span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Velocity</span>
+          <span class="telemetry-chart" v-if="telemetry.velocitySparkline">{{ telemetry.velocitySparkline }}</span>
+          <span class="telemetry-value">{{ telemetry.orbitalVelocityKmS.toFixed(2) }} <span class="telemetry-unit">km/s</span></span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Light Travel</span>
+          <span class="telemetry-value">{{ formatLightTravel(telemetry.lightTravelMin) }}</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Local Solar Time</span>
+          <span class="telemetry-value telemetry-mono">{{ telemetry.localSolarTime }}</span>
+        </div>
+      </div>
     </div>
   </Transition>
 </template>
@@ -15,9 +40,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getPlanet } from '@/lib/planets'
+import type { TelemetryData } from '@/lib/telemetry'
 
 const props = defineProps<{
   planetId: string | null
+  telemetry: TelemetryData | null
 }>()
 
 const planet = computed(() => props.planetId ? getPlanet(props.planetId) : null)
@@ -26,6 +53,14 @@ function ordinalLabel(n: number): string {
   const suffixes = ['th', 'st', 'nd', 'rd']
   const v = n % 100
   return n + (suffixes[(v - 20) % 10] ?? suffixes[v] ?? suffixes[0])
+}
+
+function formatLightTravel(minutes: number): string {
+  if (minutes < 1) return `${(minutes * 60).toFixed(1)} sec`
+  if (minutes < 60) return `${minutes.toFixed(1)} min`
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return `${h}h ${m}m`
 }
 </script>
 
@@ -53,6 +88,48 @@ function ordinalLabel(n: number): string {
   text-transform: uppercase;
   line-height: 1;
   margin: 0;
+}
+.telemetry {
+  margin-top: 1.6vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35vw;
+}
+.telemetry-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8vw;
+}
+.telemetry-label {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.48vw;
+  letter-spacing: 0.15vw;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.22);
+  min-width: 7vw;
+}
+.telemetry-value {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.55vw;
+  letter-spacing: 0.05vw;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.telemetry-chart {
+  font-family: 'Datatype', sans-serif;
+  font-size: 1.1vw;
+  font-variation-settings: 'wdth' 60, 'wght' 300;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 1;
+}
+.telemetry-mono {
+  letter-spacing: 0.1vw;
+}
+.telemetry-unit {
+  font-size: 0.42vw;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.08vw;
 }
 .detail-enter-active {
   transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
