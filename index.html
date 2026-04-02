@@ -3,8 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Planetarium</title>
+    <title>Planetarium — Interactive 3D Solar System</title>
+    <meta name="description" content="An interactive 3D solar system with Keplerian orbits, procedural shaders, NASA textures, and dynamic typography that flows around planets." />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Planetarium — Interactive 3D Solar System" />
+    <meta property="og:description" content="Explore the solar system with procedural shaders, Keplerian orbits, and prose that curves around planets in real time." />
+    <meta property="og:image" content="/og_image.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://planets.guinetik.com/" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Planetarium — Interactive 3D Solar System" />
+    <meta name="twitter:description" content="Explore the solar system with procedural shaders, Keplerian orbits, and prose that curves around planets in real time." />
+    <meta name="twitter:image" content="/og_image.png" />
+
+    <link rel="canonical" href="https://planets.guinetik.com/" />
     <link href="https://fonts.googleapis.com/css2?family=Datatype:wdth,wght@50..150,100..900&display=swap" rel="stylesheet" />
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-174MZTR0HY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-174MZTR0HY');
+    </script>
+
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #06060c; }
