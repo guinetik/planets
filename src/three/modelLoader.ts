@@ -36,58 +36,14 @@ const MODEL_FILES: Record<string, string> = {
   deimos: "deimos.glb",
 };
 
-/** Prefixes for ring mesh node names baked into planet GLBs. */
-const RING_NODE_PREFIXES = ["ring", "pierscien"];
-
 export type ModelCache = Map<string, LoadedModel>;
 
-/** Compute bounding sphere of the planet body only (hides ring nodes during measurement). */
+/** Bounding sphere of the loaded model (for centering and scale). */
 function bodyBoundingSphere(group: THREE.Group): THREE.Sphere {
-  const hidden: THREE.Object3D[] = [];
-  group.traverse((child) => {
-    if (RING_NODE_PREFIXES.some((p) => child.name.toLowerCase().startsWith(p)) && child.visible) {
-      child.visible = false;
-      hidden.push(child);
-    }
-  });
-
   const box = new THREE.Box3().setFromObject(group);
   const sphere = new THREE.Sphere();
   box.getBoundingSphere(sphere);
-
-  for (const obj of hidden) obj.visible = true;
   return sphere;
-}
-
-/** Brighten ring meshes so they read as sunlit ice/dust against the dark sky. */
-function fixRingMaterials(group: THREE.Group): void {
-  group.traverse((child) => {
-    if (!(child instanceof THREE.Mesh)) return;
-    const name = child.name.toLowerCase();
-    if (!RING_NODE_PREFIXES.some((p) => name.startsWith(p))) return;
-
-    const mats = Array.isArray(child.material)
-      ? child.material
-      : [child.material];
-    for (const mat of mats) {
-      mat.blending = THREE.AdditiveBlending;
-      mat.transparent = true;
-      mat.opacity = 0.4;
-      mat.depthWrite = false;
-      mat.side = THREE.DoubleSide;
-
-      // Boost the ring surface so it's not swallowed by the dark scene
-      if ("emissive" in mat) {
-        mat.emissive = new THREE.Color(0xc8b888);
-        mat.emissiveIntensity = 0.6;
-      }
-      if ("color" in mat) {
-        mat.color.lerp(new THREE.Color(0xffffff), 0.4);
-      }
-
-      mat.needsUpdate = true;
-    }
-  });
 }
 
 /** Fix common GLB material issues: force double-sided and soften strong specular response. */
@@ -130,9 +86,8 @@ export async function loadAllModels(): Promise<ModelCache> {
     entries.map(async ([name, file]) => {
       const group = await loadGLB(`/models/${file}`);
       fixMaterials(group);
-      fixRingMaterials(group);
 
-      // Center on body (excluding rings) and compute body-only radius for scaling
+      // Center on mesh and compute radius for scaling
       const sphere1 = bodyBoundingSphere(group);
       group.position.sub(sphere1.center);
       const sphere2 = bodyBoundingSphere(group);
