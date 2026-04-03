@@ -127,7 +127,8 @@ export async function createAsteroidBelt(
     if (material instanceof THREE.MeshStandardMaterial) {
       material.roughness = Math.max(material.roughness, 0.9);
       material.metalness = Math.min(material.metalness, 0.1);
-      material.emissive = new THREE.Color(0.06, 0.05, 0.04);
+      const ec = belt.emissiveColor ?? [0.06, 0.05, 0.04];
+      material.emissive = new THREE.Color(ec[0], ec[1], ec[2]);
       material.emissiveIntensity = 0.5;
     }
 
