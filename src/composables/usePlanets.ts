@@ -11,7 +11,9 @@ import {
   orbitPathPoints,
   type OrbitalElements,
 } from "@/lib/kepler";
-import { PLANETS, SUN } from "@/lib/planets";
+import { PLANETS, SUN, ASTEROID_BELTS } from "@/lib/planets";
+import { createAsteroidBelt, type AsteroidBeltEntry } from "@/three/asteroidBelt";
+export type { AsteroidBeltEntry } from "@/three/asteroidBelt";
 import {
   ORBIT_SCALE,
   SIZE_SCALE,
@@ -47,6 +49,7 @@ export interface PlanetEntry {
 export interface SolarSystemObjects {
   entries: PlanetEntry[];
   sunObjects: SunObjects;
+  asteroidBelts: AsteroidBeltEntry[];
 }
 
 function keplerToWorld(pos: {
@@ -306,7 +309,15 @@ export async function buildPlanetEntries(
     });
   }
 
-  return { entries, sunObjects };
+  // Asteroid belts
+  const asteroidBeltEntries: AsteroidBeltEntry[] = [];
+  for (const belt of ASTEROID_BELTS) {
+    const beltEntry = await createAsteroidBelt(belt);
+    scene.add(beltEntry.group);
+    asteroidBeltEntries.push(beltEntry);
+  }
+
+  return { entries, sunObjects, asteroidBelts: asteroidBeltEntries };
 }
 
 export function tickPlanets(
@@ -315,6 +326,8 @@ export function tickPlanets(
   sunUniforms: Record<string, THREE.IUniform>,
   sunMesh?: THREE.Mesh | null,
   activePlanetId?: string | null,
+  asteroidBelts?: AsteroidBeltEntry[],
+  delta?: number,
 ): void {
   const shaderTime = simTime / 365.25;
   const inDetail = !!activePlanetId;
@@ -392,6 +405,13 @@ export function tickPlanets(
         0.26,
         0.14,
       );
+    }
+  }
+
+  // Tick asteroid belts
+  if (asteroidBelts && delta) {
+    for (const belt of asteroidBelts) {
+      belt.tick(simTime, delta);
     }
   }
 }

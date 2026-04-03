@@ -43,7 +43,7 @@ import SceneCanvas from './SceneCanvas.vue'
 import SiteNav from './SiteNav.vue'
 import PlanetLabels from './PlanetLabels.vue'
 import { useScene } from '@/composables/useScene'
-import { buildPlanetEntries, tickPlanets, type PlanetEntry } from '@/composables/usePlanets'
+import { buildPlanetEntries, tickPlanets, type PlanetEntry, type AsteroidBeltEntry } from '@/composables/usePlanets'
 import { useSceneState } from '@/composables/useSceneState'
 import { createOrbitControls } from '@/three/controls'
 import { playIntroAnimation } from '@/three/transitions'
@@ -65,6 +65,7 @@ const canvasRef = computed(() => canvasComp.value?.canvasEl ?? null)
 const { sceneObjects, onFrame } = useScene(canvasRef)
 
 const planetEntries = ref<PlanetEntry[]>([])
+const asteroidBeltEntries = ref<AsteroidBeltEntry[]>([])
 const controlsRef = shallowRef<OrbitControls | null>(null)
 const sunMeshRef = shallowRef<THREE.Mesh | null>(null)
 const sunUniformsRef = shallowRef<Record<string, THREE.IUniform>>({})
@@ -131,6 +132,7 @@ watch(sceneObjects, async (objs) => {
   await loadPlanetarium()
   const built = await buildPlanetEntries(objs.scene)
   planetEntries.value = built.entries
+  asteroidBeltEntries.value = built.asteroidBelts
   sunMeshRef.value = built.sunObjects.mesh
   sunUniformsRef.value = built.sunObjects.uniforms
 
@@ -216,7 +218,7 @@ watch(sceneObjects, async (objs) => {
     if (view.value === 'overview') {
       controls.update()
     }
-    tickPlanets(planetEntries.value, simTime, sunUniformsRef.value, sunMeshRef.value, activePlanetId.value)
+    tickPlanets(planetEntries.value, simTime, sunUniformsRef.value, sunMeshRef.value, activePlanetId.value, asteroidBeltEntries.value, delta)
 
     if (view.value === 'detail' && activePlanetId.value) {
       const entry = planetEntries.value.find(e => e.id === activePlanetId.value)
