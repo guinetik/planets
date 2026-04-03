@@ -767,5 +767,34 @@
         "New Horizons revealed a world no one expected. Heart-shaped plains of nitrogen ice, mountains of water ice as hard as bedrock at those temperatures, a thin haze of atmosphere that freezes and falls as snow when Pluto swings away from the sun on its two-hundred-and-forty-eight-year orbit. It is small, cold, and impossibly far away — and it turned out to be one of the most geologically active worlds we have ever seen."
       ]
     }
+  ],
+  "asteroidBelts": [
+    {
+      "id": "main-belt",
+      "name": "Asteroid Belt",
+      "orbit": {
+        "semiMajorAxis": 527,
+        "eccentricity": 0.08,
+        "inclination": 1.5,
+        "longitudeOfAscendingNode": 0,
+        "argumentOfPeriapsis": 0,
+        "period": 1680
+      },
+      "innerRadius": 420,
+      "outerRadius": 660,
+      "maxParticles": 1000,
+      "thickness": 7.0,
+      "orbitalSpeed": 0.02,
+      "tumbleSpeed": 0.3,
+      "sizeRange": [0.3, 1.8],
+      "sizeExponent": 2.5,
+      "kirkwoodGaps": [
+        { "position": 0.33, "width": 0.04 },
+        { "position": 0.60, "width": 0.03 },
+        { "position": 0.71, "width": 0.03 },
+        { "position": 0.98, "width": 0.05 }
+      ],
+      "glbFile": "asteroids.glb"
+    }
   ]
 }
