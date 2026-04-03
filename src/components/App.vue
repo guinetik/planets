@@ -144,9 +144,10 @@ watch(sceneObjects, async (objs) => {
 
   // Play intro or deep-link after assets are loaded
   const initialPlanet = route.params.planetId as string | undefined
-  const stopWatch = watch(assetsLoaded, (ready) => {
+  let stopWatch: (() => void) | undefined
+  stopWatch = watch(assetsLoaded, (ready) => {
     if (!ready) return
-    stopWatch()
+    stopWatch?.()
     if (initialPlanet && PLANET_IDS.includes(initialPlanet)) {
       // Deep-link: skip intro, go straight to planet
       selectPlanet(initialPlanet)
