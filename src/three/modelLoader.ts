@@ -9,7 +9,7 @@ export interface LoadedModel {
 
 const loader = new GLTFLoader();
 
-function loadGLB(url: string): Promise<THREE.Group> {
+export function loadGLB(url: string): Promise<THREE.Group> {
   return new Promise((resolve, reject) => {
     loader.load(url, (gltf) => resolve(gltf.scene), undefined, reject);
   });
@@ -58,7 +58,7 @@ function bodyBoundingSphere(group: THREE.Group): THREE.Sphere {
 }
 
 /** Fix common GLB material issues: force double-sided and soften strong specular response. */
-function fixMaterials(group: THREE.Group): void {
+export function fixMaterials(group: THREE.Group): void {
   group.traverse((child) => {
     if (!(child instanceof THREE.Mesh) || !child.material) return;
 
