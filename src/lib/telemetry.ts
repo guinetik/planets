@@ -19,6 +19,7 @@ const REAL_AU: Record<string, number> = {
   saturn: 9.537,
   uranus: 19.191,
   neptune: 30.069,
+  pluto: 39.482,
 }
 
 // Real orbital periods in Earth days
@@ -31,6 +32,7 @@ const REAL_PERIOD_DAYS: Record<string, number> = {
   saturn: 10759.22,
   uranus: 30688.5,
   neptune: 60182.0,
+  pluto: 90560.0,
 }
 
 // Real rotation periods in Earth hours (negative = retrograde)
@@ -43,6 +45,7 @@ const REAL_ROTATION_HOURS: Record<string, number> = {
   saturn: 10.656,
   uranus: -17.24,
   neptune: 16.11,
+  pluto: -153.29,
 }
 
 // Mass in Earth masses
@@ -55,6 +58,7 @@ const REAL_MASS_EARTH: Record<string, number> = {
   saturn: 95.16,
   uranus: 14.54,
   neptune: 17.15,
+  pluto: 0.0022,
 }
 
 // Equatorial radius in km
@@ -67,6 +71,7 @@ const REAL_RADIUS_KM: Record<string, number> = {
   saturn: 58232,
   uranus: 25362,
   neptune: 24622,
+  pluto: 1188.3,
 }
 
 const SPEED_OF_LIGHT_AU_PER_MIN = 0.002004 // ~1 AU in 8.317 minutes

@@ -26,6 +26,7 @@ const MODEL_FILES: Record<string, string> = {
   saturn: "saturn.glb",
   uranus: "uranus.glb",
   neptune: "neptune.glb",
+  pluto: "pluto.glb",
   moon: "moon.glb",
   io: "io.glb",
   titan: "titan.glb",
@@ -34,16 +35,26 @@ const MODEL_FILES: Record<string, string> = {
   enceladus: "enceladus.glb",
   phobos: "phobos.glb",
   deimos: "deimos.glb",
+  ganymede: "ganymedes.glb",
+  miranda: "miranda.glb",
+  titania: "titania.glb",
+  triton: "triton.glb",
+  charon: "charon.glb",
 };
 
 export type ModelCache = Map<string, LoadedModel>;
 
-/** Bounding sphere of the loaded model (for centering and scale). */
+/** Bounding sphere of the loaded model (for centering and scale).
+ *  Uses half the max extent of the bounding box rather than the box diagonal,
+ *  so spherical models get radius ≈ 1.0 instead of √3 ≈ 1.73. */
 function bodyBoundingSphere(group: THREE.Group): THREE.Sphere {
   const box = new THREE.Box3().setFromObject(group);
-  const sphere = new THREE.Sphere();
-  box.getBoundingSphere(sphere);
-  return sphere;
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const radius = Math.max(size.x, size.y, size.z) / 2;
+  return new THREE.Sphere(center, radius);
 }
 
 /** Fix common GLB material issues: force double-sided and soften strong specular response. */
@@ -102,6 +113,8 @@ export async function loadAllModels(): Promise<ModelCache> {
   for (const result of results) {
     if (result.status === "fulfilled") {
       cache.set(result.value.name, result.value.model);
+    } else {
+      console.warn("Failed to load model:", result.reason);
     }
   }
 

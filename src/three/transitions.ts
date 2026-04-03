@@ -173,6 +173,7 @@ export function transitionToDetail(
   const detail = computeDetailCamera(planetVisualRadius, camera.aspect)
 
   entry.planetGroup.visible = true
+  entry.planetMeshRef.mesh.visible = true
 
   // Hide moon orbit lines on the incoming planet
   for (const child of entry.planetGroup.children) {
@@ -283,6 +284,7 @@ export function transitionToOverview(
   // Restore all planet groups and orbit lines
   for (const entry of entries) {
     entry.planetGroup.visible = true
+    entry.planetMeshRef.mesh.visible = true
 
     if (entry.orbitLine) {
       entry.orbitLine.visible = true
@@ -319,7 +321,7 @@ export function transitionToOverview(
     onComplete: () => {
       controls.target.set(0, 0, 0)
       controls.minDistance = 4
-      controls.maxDistance = 40
+      controls.maxDistance = 100
       controls.enablePan = true
       controls.enableRotate = true
       controls.enableZoom = true
@@ -353,9 +355,15 @@ export function playIntroAnimation(
 
   for (const entry of entries) {
     entry.planetGroup.visible = true
-    const mat = entry.planetMeshRef.mesh.material as THREE.Material
-    mat.transparent = true
-    mat.opacity = 0
+
+    if (entry.planetMeshRef.isModel) {
+      // GLB model: hide the entire mesh initially, reveal it during fade-in
+      entry.planetMeshRef.mesh.visible = false
+    } else {
+      const mat = entry.planetMeshRef.mesh.material as THREE.Material
+      mat.transparent = true
+      mat.opacity = 0
+    }
 
     // Hide orbit lines initially
     if (entry.orbitLine) {
@@ -419,16 +427,25 @@ export function playIntroAnimation(
     const entry = entries[i]
     const distFraction = entry.orbit.semiMajorAxis / maxAxis
     const delay = 0.15 + distFraction * 1.8
-    const mat = entry.planetMeshRef.mesh.material as THREE.Material
 
-    gsap.to(mat, {
-      opacity: 1,
-      duration: 1.2,
-      delay,
-      onComplete: () => {
-        mat.transparent = false
-      },
-    })
+    if (entry.planetMeshRef.isModel) {
+      // GLB model: just make visible after delay
+      gsap.to({}, {
+        duration: 0.01,
+        delay,
+        onComplete: () => { entry.planetMeshRef.mesh.visible = true },
+      })
+    } else {
+      const mat = entry.planetMeshRef.mesh.material as THREE.Material
+      gsap.to(mat, {
+        opacity: 1,
+        duration: 1.2,
+        delay,
+        onComplete: () => {
+          mat.transparent = false
+        },
+      })
+    }
 
     // Orbit lines fade in
     if (entry.orbitLine) {

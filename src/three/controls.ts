@@ -12,7 +12,7 @@ export function createOrbitControls(
   controls.enableDamping = true
   controls.dampingFactor = 0.03
   controls.minDistance = 2
-  controls.maxDistance = 60
+  controls.maxDistance = 100
   controls.maxPolarAngle = Math.PI * 0.85
   controls.minPolarAngle = Math.PI * 0.05
   controls.zoomSpeed = 0.5

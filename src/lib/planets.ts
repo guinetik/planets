@@ -28,10 +28,13 @@ export interface RingConfig {
   readonly color: number[];
 }
 
+export type PlanetType = 'Terrestrial' | 'Gas Giant' | 'Ice Giant' | 'Dwarf Planet';
+
 export interface Planet {
   readonly id: string;
   readonly name: string;
   readonly order: number;
+  readonly type: PlanetType;
   readonly accentColor: string;
   readonly orbit: OrbitalElements;
   readonly displayRadius: number;
@@ -41,6 +44,7 @@ export interface Planet {
   readonly prose: readonly string[];
   readonly rotationSpeed: number;
   readonly axialTilt: number;
+  readonly useModel?: boolean;
 }
 
 export interface SunData {
@@ -73,6 +77,7 @@ interface PlanetJSON {
   id: string;
   name: string;
   order: number;
+  type: PlanetType;
   accentColor: string;
   orbit: OrbitJSON;
   displayRadius: number;
@@ -82,6 +87,7 @@ interface PlanetJSON {
   ring?: RingConfig;
   moons: MoonJSON[];
   prose: string[];
+  useModel?: boolean;
 }
 
 interface PlanetariumJSON {
@@ -117,6 +123,7 @@ function convertPlanet(p: PlanetJSON): Planet {
     id: p.id,
     name: p.name,
     order: p.order,
+    type: p.type,
     accentColor: p.accentColor,
     orbit: convertOrbit(p.orbit),
     displayRadius: p.displayRadius,
@@ -126,6 +133,7 @@ function convertPlanet(p: PlanetJSON): Planet {
     ring: p.ring,
     moons: p.moons.map(convertMoon),
     prose: p.prose,
+    useModel: p.useModel,
   };
 }
 

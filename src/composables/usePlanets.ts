@@ -211,6 +211,7 @@ export async function buildPlanetEntries(
       planet.shader,
       planet.displayRadius,
       planetModel,
+      planet.useModel,
     );
     const planetGroup = new THREE.Group();
     planetGroup.add(planetMeshRef.mesh);

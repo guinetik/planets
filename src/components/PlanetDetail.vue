@@ -8,16 +8,38 @@
       <h1 class="planet-name" :style="{ color: planet.accentColor }">
         {{ planet.name }}
       </h1>
-      <div v-if="telemetry" class="telemetry" :class="{ 'telemetry-bottom': planetId === 'saturn' || planetId === 'uranus' || planetId === 'neptune' }">
-        <div class="telemetry-row">
-          <span class="telemetry-label">Mass</span>
-          <span class="telemetry-value">{{ formatMass(telemetry.massEarths) }}</span>
+
+      <!-- Planet info card -->
+      <div class="planet-info">
+        <span class="info-type" :style="{ borderColor: planet.accentColor + '44', color: planet.accentColor + 'aa' }">
+          {{ planet.type }}
+        </span>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Mass</span>
+            <span class="info-value">{{ formatMass(telemetry?.massEarths) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Radius</span>
+            <span class="info-value">{{ formatRadius(telemetry?.radiusKm) }} <span class="info-unit">km</span></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Day</span>
+            <span class="info-value">{{ formatDayLength(planetId) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Year</span>
+            <span class="info-value">{{ formatYearLength(planetId) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Moons</span>
+            <span class="info-value">{{ planet.moons.length }}</span>
+          </div>
         </div>
-        <div class="telemetry-row">
-          <span class="telemetry-label">Radius</span>
-          <span class="telemetry-value">{{ formatRadius(telemetry.radiusKm) }} <span class="telemetry-unit">km</span></span>
-        </div>
-        <div class="telemetry-divider" />
+      </div>
+
+      <!-- Live telemetry (bottom) -->
+      <div v-if="telemetry" class="telemetry">
         <div class="telemetry-row">
           <span class="telemetry-label">Orbit</span>
           <span class="telemetry-chart">{{ telemetry.orbitProgressPie }}</span>
@@ -51,6 +73,15 @@ import { computed } from 'vue'
 import { getPlanet } from '@/lib/planets'
 import type { TelemetryData } from '@/lib/telemetry'
 
+const ROTATION_HOURS: Record<string, number> = {
+  mercury: 1407.6, venus: -5832.5, earth: 23.934, mars: 24.623,
+  jupiter: 9.925, saturn: 10.656, uranus: -17.24, neptune: 16.11, pluto: -153.29,
+}
+const PERIOD_DAYS: Record<string, number> = {
+  mercury: 87.97, venus: 224.7, earth: 365.25, mars: 686.97,
+  jupiter: 4332.59, saturn: 10759.22, uranus: 30688.5, neptune: 60182.0, pluto: 90560.0,
+}
+
 const props = defineProps<{
   planetId: string | null
   telemetry: TelemetryData | null
@@ -64,15 +95,37 @@ function ordinalLabel(n: number): string {
   return n + (suffixes[(v - 20) % 10] ?? suffixes[v] ?? suffixes[0])
 }
 
-function formatMass(earths: number): string {
+function formatMass(earths?: number): string {
+  if (earths == null) return '—'
   if (earths >= 10) return `${earths.toFixed(1)} M⊕`
   if (earths >= 0.1) return `${earths.toFixed(3)} M⊕`
   return `${earths.toFixed(4)} M⊕`
 }
 
-function formatRadius(km: number): string {
+function formatRadius(km?: number): string {
+  if (km == null) return '—'
   if (km >= 10000) return km.toLocaleString('en-US', { maximumFractionDigits: 0 })
   return km.toLocaleString('en-US', { maximumFractionDigits: 1 })
+}
+
+function formatDayLength(id: string | null): string {
+  if (!id) return '—'
+  const h = ROTATION_HOURS[id]
+  if (h == null) return '—'
+  const abs = Math.abs(h)
+  const retro = h < 0 ? ' ®' : ''
+  if (abs < 48) return `${abs.toFixed(1)}h${retro}`
+  return `${(abs / 24).toFixed(1)}d${retro}`
+}
+
+function formatYearLength(id: string | null): string {
+  if (!id) return '—'
+  const d = PERIOD_DAYS[id]
+  if (d == null) return '—'
+  if (d < 365.25) return `${d.toFixed(1)} days`
+  const years = d / 365.25
+  if (years < 10) return `${years.toFixed(2)} yrs`
+  return `${years.toFixed(1)} yrs`
 }
 
 function formatLightTravel(minutes: number): string {
@@ -109,23 +162,60 @@ function formatLightTravel(minutes: number): string {
   line-height: 1;
   margin: 0;
 }
-.telemetry {
+
+/* --- Planet info card --- */
+.planet-info {
   margin-top: 1vw;
+}
+.info-type {
+  display: inline-block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.42vw;
+  letter-spacing: 0.18vw;
+  text-transform: uppercase;
+  border: 1px solid;
+  padding: 0.15vw 0.5vw;
+  margin-bottom: 0.6vw;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.1vw 1.6vw;
+}
+.info-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.08vw;
+  align-items: baseline;
+  gap: 0.6vw;
 }
-.telemetry-divider {
-  width: 3vw;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 0.08vw 0;
+.info-label {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.4vw;
+  letter-spacing: 0.12vw;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  min-width: 3vw;
 }
-.telemetry-bottom {
+.info-value {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.45vw;
+  letter-spacing: 0.05vw;
+  color: rgba(255, 255, 255, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.info-unit {
+  font-size: 0.42vw;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.08vw;
+}
+
+/* --- Live telemetry (bottom) --- */
+.telemetry {
   position: fixed;
   bottom: 80px;
   left: 80px;
-  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08vw;
 }
 .telemetry-row {
   display: flex;
@@ -163,6 +253,8 @@ function formatLightTravel(minutes: number): string {
   color: rgba(255, 255, 255, 0.18);
   letter-spacing: 0.08vw;
 }
+
+/* --- Transitions --- */
 .detail-enter-active {
   transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
 }
@@ -178,7 +270,7 @@ function formatLightTravel(minutes: number): string {
   transform: translateY(12px);
 }
 
-/* Mobile: title below nav top-left, telemetry bottom-left */
+/* --- Mobile --- */
 @media (max-width: 1024px) {
   .planet-detail {
     top: 80px;
@@ -194,13 +286,35 @@ function formatLightTravel(minutes: number): string {
     font-size: 8vw;
     letter-spacing: 1vw;
   }
-  .telemetry,
-  .telemetry.telemetry-bottom {
-    position: fixed;
+  .info-type {
+    font-size: 2vw;
+    letter-spacing: 0.3vw;
+    padding: 0.5vw 1.5vw;
+    margin-bottom: 2vw;
+  }
+  .info-grid {
+    grid-template-columns: auto;
+    gap: 0.4vw;
+  }
+  .info-item {
+    gap: 2vw;
+  }
+  .info-label {
+    font-size: 2.6vw;
+    letter-spacing: 0.2vw;
+    min-width: 20vw;
+  }
+  .info-value {
+    font-size: 2.8vw;
+    letter-spacing: 0.1vw;
+  }
+  .info-unit {
+    font-size: 2.4vw;
+  }
+  .telemetry {
     bottom: 24px;
     left: 20px;
     right: auto;
-    margin-top: 0;
     align-items: flex-start;
   }
   .telemetry-row {
@@ -224,9 +338,6 @@ function formatLightTravel(minutes: number): string {
   }
   .telemetry-unit {
     font-size: 2.4vw;
-  }
-  .telemetry-divider {
-    width: 10vw;
   }
 }
 </style>

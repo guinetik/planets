@@ -10,8 +10,15 @@
         @home="onHome"
       />
       <PlanetLabels
-        :bodies="labelBodies"
+        :bodies="showLabels ? labelBodies : []"
         :camera="activeCamera"
+      />
+      <ConfigPane
+        :orbits="showOrbits"
+        :labels="showLabels"
+        :visible="view === 'overview'"
+        @update:orbits="showOrbits = $event"
+        @update:labels="showLabels = $event"
       />
       <router-view />
       <PlanetDetail :planet-id="activePlanetId" :telemetry="telemetry" />
@@ -43,6 +50,7 @@ import { playIntroAnimation } from '@/three/transitions'
 import { PLANET_IDS, PLANETS, SUN, getPlanet, loadPlanetarium } from '@/lib/planets'
 import { SIZE_SCALE, CAMERA_FOV } from '@/lib/constants'
 import PlanetDetail from './PlanetDetail.vue'
+import ConfigPane from './ConfigPane.vue'
 import LoadingScreen from './LoadingScreen.vue'
 import PretextBlock from '@/typography/PretextBlock.vue'
 import { usePretextLayout } from '@/composables/usePretextLayout'
@@ -64,6 +72,8 @@ const sceneReady = ref(false)
 const { view, activePlanetId, selectPlanet, returnToOverview } = useSceneState(sceneObjects, planetEntries, controlsRef, sunMeshRef)
 const { lines: proseLines, startY: proseStartY, leftX: proseLeftX, fontSize: proseFontSize, lineHeight: proseLineHeight, visible: proseVisible, updateCurveLayout, transitionTo, hideAndThen, clearLayout } = usePretextLayout(sceneObjects)
 const telemetry = ref<TelemetryData | null>(null)
+const showOrbits = ref(true)
+const showLabels = ref(true)
 const { progress: loadingProgress, loaded: assetsLoaded, markReady } = useLoading()
 
 const activeCamera = computed(() => sceneObjects.value?.camera ?? null)
@@ -84,6 +94,15 @@ const labelBodies = computed(() => {
     }
   }
   return bodies
+})
+
+watch(showOrbits, (show) => {
+  for (const entry of planetEntries.value) {
+    if (entry.orbitLine) entry.orbitLine.visible = show
+    for (const child of entry.planetGroup.children) {
+      if (child instanceof THREE.LineLoop) child.visible = show
+    }
+  }
 })
 
 function onNavSelect(id: string) {

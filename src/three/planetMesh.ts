@@ -20,9 +20,10 @@ export function createPlanetMesh(
   shader: ShaderConfig,
   displayRadius: number,
   model?: LoadedModel,
+  useModel?: boolean,
 ): PlanetMesh {
-  // --- New default: textured sphere ---
-  if (!ENABLE_GLB_PLANETS) {
+  // --- New default: textured sphere (unless useModel forces GLB) ---
+  if (!ENABLE_GLB_PLANETS && !useModel) {
     const baseColor = shader.uniforms.uBaseColor as number[];
     const simple = createSimplePlanetMesh(planetId, baseColor, displayRadius);
     return { mesh: simple.mesh, uniforms: simple.uniforms, isModel: false };
