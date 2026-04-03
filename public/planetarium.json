@@ -794,6 +794,30 @@
         { "position": 0.71, "width": 0.03 },
         { "position": 0.98, "width": 0.05 }
       ],
+      "glbFile": "asteroids.glb",
+      "emissiveColor": [0.06, 0.05, 0.04]
+    },
+    {
+      "id": "kuiper-belt",
+      "name": "Kuiper Belt",
+      "orbit": {
+        "semiMajorAxis": 1900,
+        "eccentricity": 0.05,
+        "inclination": 1.8,
+        "longitudeOfAscendingNode": 0,
+        "argumentOfPeriapsis": 0,
+        "period": 90560
+      },
+      "innerRadius": 1400,
+      "outerRadius": 2400,
+      "maxParticles": 1200,
+      "thickness": 1.0,
+      "orbitalSpeed": 0.0008,
+      "tumbleSpeed": 0.02,
+      "sizeRange": [0.003, 0.018],
+      "sizeExponent": 2.5,
+      "kirkwoodGaps": [],
+      "emissiveColor": [0.04, 0.05, 0.08],
       "glbFile": "asteroids.glb"
     }
   ]
