@@ -47,6 +47,7 @@ export interface AsteroidBelt {
   readonly sizeExponent: number;
   readonly kirkwoodGaps: readonly KirkwoodGap[];
   readonly glbFile: string;
+  readonly emissiveColor?: readonly [number, number, number];
 }
 
 export type PlanetType = 'Terrestrial' | 'Gas Giant' | 'Ice Giant' | 'Dwarf Planet';
@@ -125,6 +126,7 @@ interface AsteroidBeltJSON {
   sizeExponent: number;
   kirkwoodGaps: KirkwoodGap[];
   glbFile: string;
+  emissiveColor?: [number, number, number];
 }
 
 interface PlanetariumJSON {
@@ -190,6 +192,7 @@ function convertAsteroidBelt(b: AsteroidBeltJSON): AsteroidBelt {
     sizeExponent: b.sizeExponent,
     kirkwoodGaps: b.kirkwoodGaps,
     glbFile: b.glbFile,
+    emissiveColor: b.emissiveColor,
   };
 }
 
