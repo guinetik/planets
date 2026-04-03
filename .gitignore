@@ -3,3 +3,4 @@ dist/
 .superpowers/
 *.tsbuildinfo
 *.js.map
+__pycache__/
