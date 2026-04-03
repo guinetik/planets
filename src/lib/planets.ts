@@ -28,6 +28,27 @@ export interface RingConfig {
   readonly color: number[];
 }
 
+export interface KirkwoodGap {
+  readonly position: number;
+  readonly width: number;
+}
+
+export interface AsteroidBelt {
+  readonly id: string;
+  readonly name: string;
+  readonly orbit: OrbitalElements;
+  readonly innerRadius: number;
+  readonly outerRadius: number;
+  readonly maxParticles: number;
+  readonly thickness: number;
+  readonly orbitalSpeed: number;
+  readonly tumbleSpeed: number;
+  readonly sizeRange: readonly [number, number];
+  readonly sizeExponent: number;
+  readonly kirkwoodGaps: readonly KirkwoodGap[];
+  readonly glbFile: string;
+}
+
 export type PlanetType = 'Terrestrial' | 'Gas Giant' | 'Ice Giant' | 'Dwarf Planet';
 
 export interface Planet {
@@ -90,9 +111,26 @@ interface PlanetJSON {
   useModel?: boolean;
 }
 
+interface AsteroidBeltJSON {
+  id: string;
+  name: string;
+  orbit: OrbitJSON;
+  innerRadius: number;
+  outerRadius: number;
+  maxParticles: number;
+  thickness: number;
+  orbitalSpeed: number;
+  tumbleSpeed: number;
+  sizeRange: [number, number];
+  sizeExponent: number;
+  kirkwoodGaps: KirkwoodGap[];
+  glbFile: string;
+}
+
 interface PlanetariumJSON {
   sun: SunData;
   planets: PlanetJSON[];
+  asteroidBelts?: AsteroidBeltJSON[];
 }
 
 // --- Conversion helpers ---
@@ -137,11 +175,30 @@ function convertPlanet(p: PlanetJSON): Planet {
   };
 }
 
+function convertAsteroidBelt(b: AsteroidBeltJSON): AsteroidBelt {
+  return {
+    id: b.id,
+    name: b.name,
+    orbit: convertOrbit(b.orbit),
+    innerRadius: b.innerRadius,
+    outerRadius: b.outerRadius,
+    maxParticles: b.maxParticles,
+    thickness: b.thickness,
+    orbitalSpeed: b.orbitalSpeed,
+    tumbleSpeed: b.tumbleSpeed,
+    sizeRange: b.sizeRange,
+    sizeExponent: b.sizeExponent,
+    kirkwoodGaps: b.kirkwoodGaps,
+    glbFile: b.glbFile,
+  };
+}
+
 // --- Runtime state (populated by loadPlanetarium) ---
 
 export let SUN: SunData = null!;
 export let PLANETS: readonly Planet[] = [];
 export let PLANET_IDS: string[] = [];
+export let ASTEROID_BELTS: readonly AsteroidBelt[] = [];
 
 let _loaded = false;
 
@@ -152,6 +209,7 @@ export async function loadPlanetarium(): Promise<void> {
   SUN = data.sun;
   PLANETS = data.planets.map(convertPlanet);
   PLANET_IDS = PLANETS.map((p) => p.id);
+  ASTEROID_BELTS = (data.asteroidBelts ?? []).map(convertAsteroidBelt);
   _loaded = true;
 }
 
