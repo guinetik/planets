@@ -3,7 +3,7 @@
   <Transition name="detail" mode="out-in">
     <div v-if="planet" :key="planet.id" class="planet-detail">
       <span class="planet-number" :style="{ color: planet.accentColor + '66' }">
-        No. {{ String(planet.order).padStart(2, '0') }} — {{ ordinalLabel(planet.order) }} Planet
+        No. {{ String(planet.order).padStart(2, '0') }} — {{ planet.type === 'Dwarf Planet' ? planet.type : ordinalLabel(planet.order) + ' Planet' }}
       </span>
       <h1 class="planet-name" :style="{ color: planet.accentColor }">
         {{ planet.name }}
@@ -216,6 +216,17 @@ function formatLightTravel(minutes: number): string {
   display: flex;
   flex-direction: column;
   gap: 0.08vw;
+  animation: telemetry-in 0.5s ease 0.6s both;
+}
+@keyframes telemetry-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .telemetry-row {
   display: flex;

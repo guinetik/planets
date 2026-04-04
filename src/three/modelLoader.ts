@@ -11,7 +11,32 @@ const loader = new GLTFLoader();
 
 export function loadGLB(url: string): Promise<THREE.Group> {
   return new Promise((resolve, reject) => {
-    loader.load(url, (gltf) => resolve(gltf.scene), undefined, reject);
+    loader.load(
+      url,
+      (gltf) => {
+        // Strip embedded animations — some GLBs auto-deform via morph targets
+        if (gltf.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(gltf.scene);
+          for (const clip of gltf.animations) {
+            const action = mixer.clipAction(clip);
+            action.play();
+          }
+          // Advance to frame 0 and freeze
+          mixer.update(0);
+          mixer.stopAllAction();
+
+          // Reset any morph target influences to 0
+          gltf.scene.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.morphTargetInfluences) {
+              child.morphTargetInfluences.fill(0);
+            }
+          });
+        }
+        resolve(gltf.scene);
+      },
+      undefined,
+      reject,
+    );
   });
 }
 
@@ -40,6 +65,7 @@ const MODEL_FILES: Record<string, string> = {
   titania: "titania.glb",
   triton: "triton.glb",
   charon: "charon.glb",
+  ceres: "ceres.glb",
 };
 
 export type ModelCache = Map<string, LoadedModel>;

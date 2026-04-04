@@ -15,6 +15,7 @@ import {
   MOBILE_DETAIL_PLANET_X_RATIO,
   ORBIT_PATH_OPACITY,
   CAMERA_FOV,
+  CAMERA_NEAR,
   MOON_ORBIT_PATH_OPACITY,
   isMobile,
 } from '@/lib/constants'
@@ -56,7 +57,11 @@ function computeDetailCamera(
     target.z + distance,
   )
 
-  return { cam, target, distance }
+  // Ensure near plane doesn't clip the planet surface
+  const nearestSurface = distance - planetVisualRadius
+  const near = Math.min(CAMERA_NEAR, nearestSurface * 0.5)
+
+  return { cam, target, distance, near }
 }
 
 /** Animate directly from overview into a planet detail view. */
@@ -130,6 +135,14 @@ function animateToDetail(
       gsap.to(child, { intensity: 0.15, duration: TRANSITION_DURATION_S, ease: 'power2.inOut' })
     }
   }
+
+  // Adjust near plane to avoid clipping small planets
+  gsap.to(camera, {
+    near: detail.near,
+    duration: TRANSITION_DURATION_S,
+    ease: 'power2.inOut',
+    onUpdate: () => { camera.updateProjectionMatrix() },
+  })
 
   // Animate camera
   const startLookAt = controls.target.clone()
@@ -216,6 +229,13 @@ export function transitionToDetail(
       // Phase 2: move new planet to showcase position instantly, then zoom in
       entry.planetGroup.position.copy(DETAIL_PLANET_POS)
 
+      gsap.to(camera, {
+        near: detail.near,
+        duration: halfDuration,
+        ease: 'power2.out',
+        onUpdate: () => { camera.updateProjectionMatrix() },
+      })
+
       gsap.to(camera.position, {
         x: detail.cam.x, y: detail.cam.y, z: detail.cam.z,
         duration: halfDuration,
@@ -257,6 +277,14 @@ export function transitionToOverview(
 
   const startLookAt = controls.target.clone()
   const lookAtProxy = { x: startLookAt.x, y: startLookAt.y, z: startLookAt.z }
+
+  // Restore near plane
+  gsap.to(camera, {
+    near: CAMERA_NEAR,
+    duration: TRANSITION_DURATION_S,
+    ease: 'power2.inOut',
+    onUpdate: () => { camera.updateProjectionMatrix() },
+  })
 
   // Fade out detail key light, restore camera fill light
   if (detailLight) {

@@ -127,14 +127,28 @@ export function usePretextLayout(
       }
     }
 
-    // For ringed planets, shift text upward so it sits above the ring crossing zone
+    // For ringed planets, shift text upward so it sits above the ring crossing zone.
+    // Scale bias by how horizontal the rings appear (cos of axial tilt) —
+    // nearly-vertical rings (Uranus, tilt ~98°) don't block text vertically.
     const planetData = getPlanet(entry.id)
-    const verticalBias = planetData.ring ? -screenRadius * 0.35 : 0
+    const tiltFactor = planetData.ring
+      ? Math.abs(Math.cos(planetData.axialTilt * Math.PI / 180))
+      : 0
+    const verticalBias = planetData.ring ? -screenRadius * 0.35 * tiltFactor : 0
+
+    // Push prose below the detail panel so they don't overlap
+    let minStartY: number | undefined
+    const detailEl = document.querySelector('.planet-detail') as HTMLElement | null
+    if (detailEl) {
+      const rect = detailEl.getBoundingClientRect()
+      minStartY = rect.bottom + padding * 0.3
+    }
 
     const config: CurveLayoutConfig = {
       planet,
       padding,
       leftX: layoutLeftX,
+      minStartY,
       moons: moonCircles.length > 0 ? moonCircles : undefined,
       moonPadding: padding * 0.85,
       verticalBias,

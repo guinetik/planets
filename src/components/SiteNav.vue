@@ -10,7 +10,15 @@
       </div>
       <nav class="planet-nav desktop-nav">
         <button
-          v-for="planet in PLANETS"
+          v-for="planet in planets"
+          :key="planet.id"
+          class="nav-link"
+          :class="{ active: activePlanetId === planet.id }"
+          @click="emit('select', planet.id)"
+        >{{ planet.name }}</button>
+        <span class="nav-separator">·</span>
+        <button
+          v-for="planet in dwarfPlanets"
           :key="planet.id"
           class="nav-link"
           :class="{ active: activePlanetId === planet.id }"
@@ -24,7 +32,15 @@
     <Transition name="dropdown">
       <nav v-if="menuOpen" class="planet-nav mobile-nav">
         <button
-          v-for="planet in PLANETS"
+          v-for="planet in planets"
+          :key="planet.id"
+          class="nav-link"
+          :class="{ active: activePlanetId === planet.id }"
+          @click="onMobileSelect(planet.id)"
+        >{{ planet.name }}</button>
+        <span class="nav-separator">·</span>
+        <button
+          v-for="planet in dwarfPlanets"
           :key="planet.id"
           class="nav-link"
           :class="{ active: activePlanetId === planet.id }"
@@ -36,8 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { PLANETS } from '@/lib/planets'
+
+const planets = computed(() => PLANETS.filter(p => p.type !== 'Dwarf Planet'))
+const dwarfPlanets = computed(() => PLANETS.filter(p => p.type === 'Dwarf Planet'))
 
 const props = defineProps<{ activePlanetId: string | null }>()
 const emit = defineEmits<{
@@ -125,6 +144,11 @@ function onHomeClick() {
   padding: 0;
 }
 .nav-link:hover, .nav-link.active { color: rgba(255, 255, 255, 0.7); }
+.nav-separator {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 12px;
+  user-select: none;
+}
 
 /* Hamburger — hidden on desktop */
 .hamburger {

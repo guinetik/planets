@@ -208,9 +208,42 @@
       ]
     },
     {
+      "id": "ceres",
+      "name": "Ceres",
+      "order": 5,
+      "type": "Dwarf Planet",
+      "accentColor": "#A0A0A0",
+      "useModel": true,
+      "orbit": {
+        "semiMajorAxis": 527,
+        "eccentricity": 0.076,
+        "inclination": 10.59,
+        "longitudeOfAscendingNode": 80.329,
+        "argumentOfPeriapsis": 73.597,
+        "period": 1682.0
+      },
+      "displayRadius": 0.001,
+      "axialTilt": 4.0,
+      "rotationSpeed": 2.654,
+      "shader": {
+        "type": "rockyPlanet",
+        "uniforms": {
+          "uBaseColor": [0.55, 0.54, 0.52],
+          "uHasAtmosphere": 0.0,
+          "uSeed": 50.0
+        }
+      },
+      "moons": [],
+      "prose": [
+        "Ceres was the first asteroid ever discovered — found by Giuseppe Piazzi on the first night of the nineteenth century, January 1, 1801. For half a century it was considered a planet, then demoted to asteroid as more bodies were found in the same region. In 2006 it was promoted again, this time to dwarf planet — the only one in the inner solar system, orbiting quietly among the rubble of the asteroid belt.",
+        "Dawn arrived at Ceres in 2015 and found bright spots gleaming from the floor of Occator crater — deposits of sodium carbonate carried to the surface by briny water welling up from a subsurface ocean. Ceres is a water world in disguise, a body that has more fresh water than Earth has, locked beneath a dark, dusty crust.",
+        "It is small enough to fit inside Texas and yet massive enough to have pulled itself into a sphere. In a solar system that sorts neatly into rocky planets and gas giants, Ceres is neither — a remnant of something that might have grown into a planet had Jupiter not stirred the neighbourhood into chaos four and a half billion years ago."
+      ]
+    },
+    {
       "id": "jupiter",
       "name": "Jupiter",
-      "order": 5,
+      "order": 6,
       "type": "Gas Giant",
       "accentColor": "#C8A878",
       "orbit": {
@@ -328,7 +361,7 @@
     {
       "id": "saturn",
       "name": "Saturn",
-      "order": 6,
+      "order": 7,
       "type": "Gas Giant",
       "accentColor": "#D4C890",
       "orbit": {
@@ -515,7 +548,7 @@
     {
       "id": "uranus",
       "name": "Uranus",
-      "order": 7,
+      "order": 8,
       "type": "Ice Giant",
       "accentColor": "#78C8D4",
       "orbit": {
@@ -660,7 +693,7 @@
     {
       "id": "neptune",
       "name": "Neptune",
-      "order": 8,
+      "order": 9,
       "type": "Ice Giant",
       "accentColor": "#5068C8",
       "orbit": {
@@ -715,7 +748,7 @@
     {
       "id": "pluto",
       "name": "Pluto",
-      "order": 9,
+      "order": 10,
       "type": "Dwarf Planet",
       "accentColor": "#C8B8A0",
       "useModel": true,
@@ -810,7 +843,7 @@
       },
       "innerRadius": 1400,
       "outerRadius": 2400,
-      "maxParticles": 1200,
+      "maxParticles": 3000,
       "thickness": 1.0,
       "orbitalSpeed": 0.0008,
       "tumbleSpeed": 0.02,

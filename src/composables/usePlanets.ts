@@ -380,15 +380,16 @@ export function tickPlanets(
       0.1,
     );
 
-    // Moons: keep orbiting for active planet, pause for others in detail
-    // In detail view, slow fast moons (period < 5 days) so they don't zip across the frame
-    // but leave slow moons like Earth's Moon at normal speed
+    // Moons: keep orbiting for active planet, pause for others in detail.
+    // In detail view, slow all non-Earth moons so they don't zip across the frame.
+    // Earth's Moon is slow enough naturally; other planets' moons need dampening.
     for (const moon of entry.moonEntries) {
       if (!inDetail || isActive) {
-        const fastMoon = moon.orbit.period < 5
-        const moonSpeedDivisor = (inDetail && isActive && fastMoon)
-          ? MOON_ORBIT_SPEED_DIVISOR * 4
-          : MOON_ORBIT_SPEED_DIVISOR;
+        const isEarth = entry.id === 'earth'
+        let moonSpeedDivisor = MOON_ORBIT_SPEED_DIVISOR;
+        if (inDetail && isActive && !isEarth) {
+          moonSpeedDivisor *= moon.orbit.period < 5 ? 8 : 4;
+        }
         const moonPos = orbitalPosition3D(
           moon.orbit,
           simTime / moonSpeedDivisor,
@@ -408,10 +409,13 @@ export function tickPlanets(
     }
   }
 
-  // Tick asteroid belts
-  if (asteroidBelts && delta) {
+  // Tick asteroid belts (hide in detail view)
+  if (asteroidBelts) {
     for (const belt of asteroidBelts) {
-      belt.tick(simTime, delta);
+      belt.group.visible = !inDetail;
+      if (!inDetail && delta) {
+        belt.tick(simTime, delta);
+      }
     }
   }
 }
