@@ -55,7 +55,7 @@ defineProps<{
   visible: boolean
 }>()
 
-function fragmentAlign(line: LayoutLine, fragmentIndex: number): string {
+function fragmentAlign(line: LayoutLine, fragmentIndex: number): 'left' | 'right' | 'center' {
   // Single-fragment: right-align to hug the planet edge (same as before)
   if (line.fragments.length === 1) return 'right'
   // Multi-fragment: left fragment right-aligns (hugs moon from left),
