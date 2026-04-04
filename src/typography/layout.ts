@@ -7,12 +7,18 @@ import {
   textColumnLeftPx,
 } from '@/lib/constants'
 
-export interface LayoutLine {
+export interface LayoutFragment {
   text: string
-  width: number
-  availableWidth: number  // max width at this line's Y — used for right-alignment
-  offsetX?: number        // per-line horizontal offset from block's leftX (used by circular layout)
-  centered?: boolean      // if true, text is centered within availableWidth
+  width: number        // actual measured text width
+  slotLeft: number     // absolute screen X position
+  slotWidth: number    // available width of this slot
+}
+
+export interface LayoutLine {
+  fragments: LayoutFragment[]
+  availableWidth: number   // total available width across all slots (for animation sizing)
+  offsetX?: number         // per-line horizontal offset (used by circular mobile layout)
+  centered?: boolean       // if true, text is centered within availableWidth
 }
 
 const MIN_LINE_WIDTH = 60  // never collapse lines below this
@@ -92,7 +98,10 @@ export function layoutProseWithObstacles(
     const result = layoutNextLine(prepared, cursor, maxWidth)
     if (result === null) break
 
-    lines.push({ text: result.text, width: result.width, availableWidth: maxWidth })
+    lines.push({
+      fragments: [{ text: result.text, width: result.width, slotLeft: leftX, slotWidth: maxWidth }],
+      availableWidth: maxWidth,
+    })
     cursor = result.end
     lineIndex++
   }
@@ -212,7 +221,10 @@ export function layoutProseAlongCurve(
     }
     const result = layoutNextLine(prepared, cursor, maxWidth)
     if (result === null) break
-    lines.push({ text: result.text, width: result.width, availableWidth: maxWidth })
+    lines.push({
+      fragments: [{ text: result.text, width: result.width, slotLeft: leftX, slotWidth: maxWidth }],
+      availableWidth: maxWidth,
+    })
     cursor = result.end
     lineIndex++
   }
@@ -345,8 +357,7 @@ export function layoutProseInsideCircle(
     const offsetX = chord.left - blockLeftX
 
     lines.push({
-      text: result.text,
-      width: result.width,
+      fragments: [{ text: result.text, width: result.width, slotLeft: chord.left, slotWidth: chord.width }],
       availableWidth: chord.width,
       offsetX,
       centered: true,
