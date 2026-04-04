@@ -4,6 +4,7 @@ import {
   ellipseIntrusionAtY,
   maxIntrusionAtY,
   circleIntervalAtBand,
+  carveTextLineSlots,
   type ScreenCircle,
   type ScreenEllipseObstacle,
   type Obstacle,
@@ -108,5 +109,65 @@ describe('circleIntervalAtBand', () => {
     expect(result).not.toBeNull()
     expect(result!.left).toBeLessThan(500)
     expect(result!.right).toBeGreaterThan(500)
+  })
+})
+
+describe('carveTextLineSlots', () => {
+  it('returns the full base when there are no blocked intervals', () => {
+    const base: Interval = { left: 0, right: 800 }
+    const result = carveTextLineSlots(base, [])
+    expect(result).toEqual([{ left: 0, right: 800 }])
+  })
+
+  it('carves a single blocked interval from the middle', () => {
+    const base: Interval = { left: 0, right: 800 }
+    const blocked: Interval[] = [{ left: 300, right: 500 }]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([
+      { left: 0, right: 300 },
+      { left: 500, right: 800 },
+    ])
+  })
+
+  it('carves blocked interval from the right edge', () => {
+    const base: Interval = { left: 0, right: 800 }
+    const blocked: Interval[] = [{ left: 600, right: 900 }]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([{ left: 0, right: 600 }])
+  })
+
+  it('carves multiple blocked intervals', () => {
+    const base: Interval = { left: 0, right: 1000 }
+    const blocked: Interval[] = [
+      { left: 200, right: 350 },
+      { left: 600, right: 750 },
+    ]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([
+      { left: 0, right: 200 },
+      { left: 350, right: 600 },
+      { left: 750, right: 1000 },
+    ])
+  })
+
+  it('filters out slots narrower than minWidth', () => {
+    const base: Interval = { left: 0, right: 800 }
+    const blocked: Interval[] = [{ left: 20, right: 500 }]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([{ left: 500, right: 800 }])
+  })
+
+  it('returns empty when everything is blocked', () => {
+    const base: Interval = { left: 0, right: 100 }
+    const blocked: Interval[] = [{ left: -10, right: 110 }]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([])
+  })
+
+  it('handles blocked interval entirely outside base', () => {
+    const base: Interval = { left: 100, right: 800 }
+    const blocked: Interval[] = [{ left: 900, right: 1000 }]
+    const result = carveTextLineSlots(base, blocked)
+    expect(result).toEqual([{ left: 100, right: 800 }])
   })
 })

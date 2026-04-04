@@ -67,6 +67,36 @@ export function circleIntervalAtBand(
   return { left: left - padding, right: right + padding }
 }
 
+const MIN_SLOT_WIDTH = 60
+
+/**
+ * Given a base horizontal interval and a set of blocked intervals,
+ * return the remaining usable text slots. Discards slots narrower
+ * than MIN_SLOT_WIDTH. Ported from Pretext's editorial-engine demo.
+ */
+export function carveTextLineSlots(base: Interval, blocked: Interval[]): Interval[] {
+  let slots: Interval[] = [base]
+
+  for (const block of blocked) {
+    const next: Interval[] = []
+    for (const slot of slots) {
+      if (block.right <= slot.left || block.left >= slot.right) {
+        next.push(slot)
+        continue
+      }
+      if (block.left > slot.left) {
+        next.push({ left: slot.left, right: block.left })
+      }
+      if (block.right < slot.right) {
+        next.push({ left: block.right, right: slot.right })
+      }
+    }
+    slots = next
+  }
+
+  return slots.filter(slot => slot.right - slot.left >= MIN_SLOT_WIDTH)
+}
+
 /**
  * Returns the maximum horizontal intrusion of all obstacles at a given screen y.
  * Subtract this from the text column's maxWidth for that line.
