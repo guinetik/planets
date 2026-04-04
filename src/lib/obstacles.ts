@@ -33,6 +33,40 @@ export function ellipseIntrusionAtY(ellipse: ScreenEllipse, y: number): number {
   return ellipse.rx * Math.sqrt(1 - (dy / ellipse.ry) ** 2)
 }
 
+export interface Interval {
+  left: number
+  right: number
+}
+
+/**
+ * Compute the horizontal interval a circle blocks within a line band [bandTop, bandBottom].
+ * Samples top, middle, and bottom of the band, taking the widest extent.
+ * Returns null if the circle doesn't intersect the band at all.
+ */
+export function circleIntervalAtBand(
+  circle: ScreenCircle,
+  bandTop: number,
+  bandBottom: number,
+  padding: number,
+): Interval | null {
+  const sampleYs = [bandTop, (bandTop + bandBottom) / 2, bandBottom]
+  let left = Infinity
+  let right = -Infinity
+
+  for (const y of sampleYs) {
+    const dy = y - circle.cy
+    if (Math.abs(dy) >= circle.r) continue
+    const halfChord = Math.sqrt(circle.r ** 2 - dy ** 2)
+    const chordLeft = circle.cx - halfChord
+    const chordRight = circle.cx + halfChord
+    if (chordLeft < left) left = chordLeft
+    if (chordRight > right) right = chordRight
+  }
+
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return null
+  return { left: left - padding, right: right + padding }
+}
+
 /**
  * Returns the maximum horizontal intrusion of all obstacles at a given screen y.
  * Subtract this from the text column's maxWidth for that line.

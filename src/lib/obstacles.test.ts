@@ -3,9 +3,11 @@ import {
   circleIntrusionAtY,
   ellipseIntrusionAtY,
   maxIntrusionAtY,
+  circleIntervalAtBand,
   type ScreenCircle,
   type ScreenEllipseObstacle,
   type Obstacle,
+  type Interval,
 } from './obstacles'
 
 describe('circleIntrusionAtY', () => {
@@ -65,5 +67,46 @@ describe('maxIntrusionAtY', () => {
       { kind: 'ellipse', cx: 800, cy: 300, rx: 90, ry: 50 },
     ]
     expect(maxIntrusionAtY(obstacles, 300)).toBeCloseTo(90)
+  })
+})
+
+describe('circleIntervalAtBand', () => {
+  const circle: ScreenCircle = { kind: 'circle', cx: 500, cy: 400, r: 100 }
+
+  it('returns null when band is entirely above the circle', () => {
+    expect(circleIntervalAtBand(circle, 100, 120, 0)).toBeNull()
+  })
+
+  it('returns null when band is entirely below the circle', () => {
+    expect(circleIntervalAtBand(circle, 600, 620, 0)).toBeNull()
+  })
+
+  it('returns full diameter interval at the equator', () => {
+    const result = circleIntervalAtBand(circle, 395, 405, 0)
+    expect(result).not.toBeNull()
+    expect(result!.left).toBeCloseTo(400, 0)
+    expect(result!.right).toBeCloseTo(600, 0)
+  })
+
+  it('returns narrower interval near the top of the circle', () => {
+    const result = circleIntervalAtBand(circle, 310, 320, 0)
+    expect(result).not.toBeNull()
+    // widest sample at y=320: dy=-80, halfChord=60, width=120; well below full diameter (200)
+    expect(result!.right - result!.left).toBeLessThan(121)
+    expect(result!.right - result!.left).toBeGreaterThan(80)
+  })
+
+  it('applies padding to expand the interval', () => {
+    const withoutPad = circleIntervalAtBand(circle, 395, 405, 0)!
+    const withPad = circleIntervalAtBand(circle, 395, 405, 20)!
+    expect(withPad.left).toBeCloseTo(withoutPad.left - 20, 0)
+    expect(withPad.right).toBeCloseTo(withoutPad.right + 20, 0)
+  })
+
+  it('returns interval when band partially overlaps circle top', () => {
+    const result = circleIntervalAtBand(circle, 295, 310, 0)
+    expect(result).not.toBeNull()
+    expect(result!.left).toBeLessThan(500)
+    expect(result!.right).toBeGreaterThan(500)
   })
 })
