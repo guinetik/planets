@@ -3,24 +3,43 @@
   <div
     v-if="lines.length > 0"
     class="pretext-block"
-    :style="{ top: `${topY}px`, left: `${leftX}px` }"
   >
-    <span
+    <div
       v-for="(line, i) in lines"
       :key="i"
-      class="pretext-line"
+      class="pretext-line-row"
       :class="{ 'is-visible': visible }"
       :style="{
-        width: `${line.availableWidth}px`,
+        top: `${topY + i * lineHeight}px`,
         fontSize: `${fontSize}px`,
         lineHeight: `${lineHeight}px`,
-        marginLeft: line.offsetX ? `${line.offsetX}px` : undefined,
-        textAlign: line.centered ? 'center' : undefined,
+        height: `${lineHeight}px`,
         transitionDelay: visible
           ? `${i * 40}ms`
           : `${(lines.length - 1 - i) * 25}ms`,
       }"
-    >{{ line.text }}</span>
+    >
+      <span
+        v-if="line.centered"
+        class="pretext-fragment"
+        :style="{
+          left: `${leftX + (line.offsetX || 0)}px`,
+          width: `${line.availableWidth}px`,
+          textAlign: 'center',
+        }"
+      >{{ line.fragments[0]?.text }}</span>
+      <span
+        v-else
+        v-for="(frag, fi) in line.fragments"
+        :key="fi"
+        class="pretext-fragment"
+        :style="{
+          left: `${frag.slotLeft}px`,
+          width: `${frag.slotWidth}px`,
+          textAlign: fragmentAlign(line, fi),
+        }"
+      >{{ frag.text }}</span>
+    </div>
   </div>
 </template>
 
@@ -35,32 +54,47 @@ defineProps<{
   lineHeight: number
   visible: boolean
 }>()
+
+function fragmentAlign(line: LayoutLine, fragmentIndex: number): string {
+  if (line.fragments.length === 1) return 'right'
+  if (fragmentIndex === line.fragments.length - 1) return 'right'
+  if (fragmentIndex === 0) return 'right'
+  return 'center'
+}
 </script>
 
 <style scoped>
 .pretext-block {
   position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 2;
   pointer-events: none;
 }
-.pretext-line {
-  display: block;
-  font-family: Georgia, 'Times New Roman', serif;
-  color: rgba(200, 192, 180, 0.75);
-  white-space: nowrap;
-  overflow: hidden;
-  text-align: right;
+.pretext-line-row {
+  position: absolute;
+  left: 0;
+  width: 100%;
   opacity: 0;
   transform: translateX(-20px);
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.pretext-line.is-visible {
+.pretext-line-row.is-visible {
   opacity: 1;
   transform: translateX(0);
 }
+.pretext-fragment {
+  position: absolute;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: rgba(200, 192, 180, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+}
 
 @media (max-width: 1024px) {
-  .pretext-line {
+  .pretext-fragment {
     text-shadow:
       0 0 4px rgba(0, 0, 0, 0.9),
       0 0 8px rgba(0, 0, 0, 0.7),
