@@ -1,6 +1,7 @@
 // src/typography/layout.ts
 import { prepareWithSegments, layoutNextLine, type LayoutCursor } from '@chenglou/pretext'
 import type { Obstacle, ScreenCircle } from '@/lib/obstacles'
+import { circleIntervalAtBand, carveTextLineSlots, type Interval } from '@/lib/obstacles'
 import {
   proseFont,
   proseLineHeight,
@@ -127,44 +128,95 @@ export interface CurveLayoutResult {
 }
 
 /**
- * Helper: compute per-line maxWidth for a given startY against the planet circle.
- * Returns null for lines that are too narrow or outside the circle.
+ * Compute blocked intervals at a given line band from planet + moons.
+ * The planet blocks everything to the right of its left limb.
+ * Each moon blocks its chord width at that Y.
  */
-function curveWidthAtLine(
-  lineIndex: number,
-  startY: number,
-  lineH: number,
+function blockedIntervalsAtBand(
+  bandTop: number,
+  bandBottom: number,
   planet: ScreenCircle,
-  padding: number,
-  leftX: number,
+  planetPadding: number,
+  viewportRight: number,
   moons?: ScreenCircle[],
   moonPadding?: number,
-): number | null {
-  const lineY = startY + lineIndex * lineH
-  const dy = lineY - planet.cy
-  if (Math.abs(dy) > planet.r) return null
-  const planetLeftAtY = planet.cx - Math.sqrt(planet.r ** 2 - dy ** 2)
-  let rightBound = planetLeftAtY - padding
+): Interval[] {
+  const blocked: Interval[] = []
 
-  // Check if any moon further narrows the line at this Y
+  // Planet: block from its left limb (minus padding) to the right edge of screen
+  const planetInterval = circleIntervalAtBand(planet, bandTop, bandBottom, 0)
+  if (planetInterval) {
+    blocked.push({ left: planetInterval.left - planetPadding, right: viewportRight })
+  }
+
+  // Moons: each blocks its chord width
   if (moons) {
-    const mPad = moonPadding ?? padding * 0.5
+    const mPad = moonPadding ?? 0
     for (const moon of moons) {
-      const mdy = lineY - moon.cy
-      if (Math.abs(mdy) > moon.r) continue
-      const moonLeftAtY = moon.cx - Math.sqrt(moon.r ** 2 - mdy ** 2)
-      rightBound = Math.min(rightBound, moonLeftAtY - mPad)
+      const moonInterval = circleIntervalAtBand(moon, bandTop, bandBottom, mPad)
+      if (moonInterval) {
+        blocked.push(moonInterval)
+      }
     }
   }
 
-  const maxWidth = rightBound - leftX
-  return maxWidth >= MIN_LINE_WIDTH ? maxWidth : null
+  return blocked
+}
+
+/**
+ * Count lines in pass 1 (measuring pass) — uses planet only, no moons.
+ * Returns the number of text lines that fit.
+ */
+function measurePass(
+  prepared: ReturnType<typeof prepareWithSegments>,
+  startY: number,
+  lineH: number,
+  planet: ScreenCircle,
+  planetPadding: number,
+  leftX: number,
+  viewportRight: number,
+): { lineCount: number } {
+  let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
+  let lineCount = 0
+  let lineIndex = 0
+
+  while (true) {
+    const bandTop = startY + lineIndex * lineH
+    const bandBottom = bandTop + lineH
+    if (bandTop > planet.cy + planet.r) break
+
+    const blocked = blockedIntervalsAtBand(bandTop, bandBottom, planet, planetPadding, viewportRight)
+    const base: Interval = { left: leftX, right: viewportRight }
+    const slots = carveTextLineSlots(base, blocked)
+
+    if (slots.length === 0) {
+      lineIndex++
+      continue
+    }
+
+    // Use the widest slot for measuring
+    let widest = slots[0]!
+    for (let i = 1; i < slots.length; i++) {
+      if (slots[i]!.right - slots[i]!.left > widest.right - widest.left) {
+        widest = slots[i]!
+      }
+    }
+
+    const result = layoutNextLine(prepared, cursor, widest.right - widest.left)
+    if (result === null) break
+    cursor = result.end
+    lineCount++
+    lineIndex++
+  }
+
+  return { lineCount }
 }
 
 /**
  * Lays out prose text alongside a planet's projected screen circle.
- * Text is vertically centered on the planet. Each line's right edge
- * follows the planet's curvature.
+ * Text is vertically centered on the planet. Each line's available slots
+ * are carved from blocked intervals (planet edge + moon silhouettes).
+ * Text flows left-to-right across slots like a newspaper.
  *
  * Two-pass: first counts lines from the top to measure total text height,
  * then re-lays out from a centered startY.
@@ -177,55 +229,61 @@ export function layoutProseAlongCurve(
   const prepared = getPrepared(prose)
   const lineH = proseLineHeight()
   const fontSize = parseFloat(proseFont())
+  const viewportRight = typeof window !== 'undefined' ? window.innerWidth : 1920
 
-  // Pass 1: lay out from top of circle to count lines (ignoring moons — they're transient)
+  // Pass 1: measure from top of circle (no moons — they're transient)
   const topStartY = planet.cy - planet.r
-  let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
-  let lineCount = 0
-  let lineIndex = 0
+  const { lineCount } = measurePass(prepared, topStartY, lineH, planet, padding, leftX, viewportRight)
 
-  while (true) {
-    const maxWidth = curveWidthAtLine(lineIndex, topStartY, lineH, planet, padding, leftX)
-    if (maxWidth === null) {
-      if (topStartY + lineIndex * lineH > planet.cy) break
-      lineIndex++
-      continue
-    }
-    const result = layoutNextLine(prepared, cursor, maxWidth)
-    if (result === null) break
-    cursor = result.end
-    lineCount++
-    lineIndex++
-  }
-
-  // Pass 2: lay out centered on the planet, with optional vertical bias
-  // (e.g. ringed planets shift text upward to avoid ring crossing zone)
+  // Pass 2: lay out centered on planet, with moons
   const textHeight = lineCount * lineH
   let startY = planet.cy - textHeight / 2 + verticalBias
-
-  // Ensure text starts below the detail panel
   if (minStartY !== undefined && startY < minStartY) {
     startY = minStartY
   }
 
-  cursor = { segmentIndex: 0, graphemeIndex: 0 }
+  let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
   const lines: LayoutLine[] = []
-  lineIndex = 0
+  let lineIndex = 0
 
   while (true) {
-    const maxWidth = curveWidthAtLine(lineIndex, startY, lineH, planet, padding, leftX, moons, moonPadding)
-    if (maxWidth === null) {
-      if (startY + lineIndex * lineH > planet.cy + planet.r) break
+    const bandTop = startY + lineIndex * lineH
+    const bandBottom = bandTop + lineH
+    if (bandTop > planet.cy + planet.r) break
+
+    const blocked = blockedIntervalsAtBand(bandTop, bandBottom, planet, padding, viewportRight, moons, moonPadding)
+    const base: Interval = { left: leftX, right: viewportRight }
+    const slots = carveTextLineSlots(base, blocked)
+
+    if (slots.length === 0) {
       lineIndex++
       continue
     }
-    const result = layoutNextLine(prepared, cursor, maxWidth)
-    if (result === null) break
-    lines.push({
-      fragments: [{ text: result.text, width: result.width, slotLeft: leftX, slotWidth: maxWidth }],
-      availableWidth: maxWidth,
-    })
-    cursor = result.end
+
+    // Layout text into each slot left-to-right
+    const fragments: LayoutFragment[] = []
+    let totalSlotWidth = 0
+    for (const slot of slots) {
+      const slotWidth = slot.right - slot.left
+      const result = layoutNextLine(prepared, cursor, slotWidth)
+      if (result === null) break
+      fragments.push({
+        text: result.text,
+        width: result.width,
+        slotLeft: slot.left,
+        slotWidth,
+      })
+      cursor = result.end
+      totalSlotWidth += slotWidth
+    }
+
+    if (fragments.length > 0) {
+      lines.push({ fragments, availableWidth: totalSlotWidth })
+    }
+
+    // If layoutNextLine returned null mid-line, we're out of text
+    if (fragments.length < slots.length) break
+
     lineIndex++
   }
 
