@@ -102,7 +102,7 @@ export function usePretextLayout(
     const layoutLeftX = divX * 0.3
 
     // Padding scales with planet size — keeps text off the planet surface
-    const padding = screenRadius * 0.32
+    const padding = screenRadius * 0.008
 
     // Project moons — include any that overlap the text column
     const textRight = cx - screenRadius
@@ -150,7 +150,7 @@ export function usePretextLayout(
       leftX: layoutLeftX,
       minStartY,
       moons: moonCircles.length > 0 ? moonCircles : undefined,
-      moonPadding: padding * 0.85,
+      moonPadding: 50,
       verticalBias,
     }
 
