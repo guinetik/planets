@@ -157,7 +157,7 @@ export function usePretextLayout(
     const result = layoutProseAlongCurve(prose, config)
     lines.value = result.lines
     startY.value = result.startY
-    leftX.value = divX
+    leftX.value = 0  // fragments carry absolute screen positions
     fontSize.value = result.fontSize
     lineHeight.value = result.lineHeight
   }
